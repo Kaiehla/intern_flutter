@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intern_flutter/pages/add_log_page.dart';
 import 'package:intern_flutter/pages/profile_page.dart';
 import 'package:intern_flutter/pages/register_page.dart';
-
+import 'package:google_fonts/google_fonts.dart';
 
 void main() {
   runApp(const MyApp());
@@ -21,6 +21,7 @@ class MyApp extends StatelessWidget {
         theme: ThemeData(
           colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
           useMaterial3: true,
+          textTheme: GoogleFonts.manropeTextTheme(),
         ),
         debugShowCheckedModeBanner: false,
         home: Scaffold(
