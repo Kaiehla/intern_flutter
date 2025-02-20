@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intern_flutter/main.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:gif/gif.dart';
 
 class register_page extends StatelessWidget {
   const register_page({super.key});
@@ -20,7 +21,13 @@ class register_page extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       home: Scaffold(
         appBar: AppBar(
-          title: Text(appTitle),
+          title: SizedBox(
+            height: 42,
+            child: Gif(
+              image: AssetImage("logo.gif"),
+              autostart: Autostart.loop,
+            ),
+          ),
           centerTitle: true,
         ),
         // LayoutBuilder para magexpand yung content ng page sa buong screen height
@@ -43,11 +50,6 @@ class register_page extends StatelessWidget {
               ),
             );
           },
-        ),
-        drawer: Drawer(
-          child: ListView(
-            children: [DrwHeader(), DrwListView()],
-          ),
         ),
       ),
     );
@@ -111,6 +113,10 @@ class _TextFieldSectionState extends State<TextFieldSection> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        Align(
+          alignment: Alignment.center,
+          child: HeaderLabelSection("Create an Intern ID"),
+        ),
         // Intern Card - rereflect dito yung tinatype sa baba; connected to sa kabilang stateless class, pinapasa lang dito sa class yung tinatype from textfields via params
         InternIDCard(
           name: _nameController.text,
@@ -299,6 +305,28 @@ class _TextFieldSectionState extends State<TextFieldSection> {
   }
 }
 
+// Label
+class HeaderLabelSection extends StatelessWidget {
+  final String label;
+
+  const HeaderLabelSection(this.label, {super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.only(bottom: 12),
+      child: Text(
+        label,
+        style: TextStyle(
+          fontSize: 18,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+    );
+  }
+}
+
+// Intern ID Card
 class InternIDCard extends StatelessWidget {
   final String name;
   final String birthday;

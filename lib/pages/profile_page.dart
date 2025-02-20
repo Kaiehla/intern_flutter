@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intern_flutter/main.dart';
 import 'package:intern_flutter/pages/register_page.dart';
+import 'package:gif/gif.dart';
 
 class profile_page extends StatelessWidget {
   const profile_page({super.key});
@@ -10,7 +11,13 @@ class profile_page extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("My Intern"),
+        title: SizedBox(
+          height: 42,
+          child: Gif(
+            image: AssetImage("logo.gif"),
+            autostart: Autostart.loop,
+          ),
+        ),
         centerTitle: true,
       ),
       body: Padding(
@@ -115,3 +122,6 @@ class InfoCard extends StatelessWidget {
     );
   }
 }
+
+
+
