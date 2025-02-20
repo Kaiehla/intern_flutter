@@ -91,6 +91,14 @@ packages:
     description: flutter
     source: sdk
     version: "0.0.0"
+  gif:
+    dependency: "direct main"
+    description:
+      name: gif
+      sha256: ade95694f1471da737922806818ffade2814d1d7f8d10af38ebcf36ace012bc0
+      url: "https://pub.dev"
+    source: hosted
+    version: "2.3.0"
   google_fonts:
     dependency: "direct main"
     description:
@@ -248,6 +256,14 @@ packages:
     description: flutter
     source: sdk
     version: "0.0.0"
+  smooth_page_indicator:
+    dependency: "direct main"
+    description:
+      name: smooth_page_indicator
+      sha256: "3b28b0c545fa67ed9e5997d9f9720d486f54c0c607e056a1094544e36934dff3"
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.2.0+3"
   source_span:
     dependency: transitive
     description:

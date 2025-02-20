@@ -1,70 +1,94 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:intern_flutter/main.dart';
 import 'package:intern_flutter/pages/register_page.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:gif/gif.dart';
 
 class profile_page extends StatelessWidget {
   const profile_page({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text("My Intern"),
-        centerTitle: true,
+    const String appTitle = "Create Intern ID";
+
+    return MaterialApp(
+      title: appTitle,
+      theme: ThemeData(
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
+        useMaterial3: true,
+        textTheme: GoogleFonts.manropeTextTheme(),
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            InternIDCard(
-              name: "Kaiehla Espiritu",
-              birthday: "04/14/02",
-              school: "University of Santo Tomas",
-              company: "Symph",
-              position: "UI/UX Designer",
+      debugShowCheckedModeBanner: false,
+      home: Scaffold(
+        appBar: AppBar(
+          title: SizedBox(
+            height: 42,
+            child: Gif(
+              image: AssetImage("logo.gif"),
+              autostart: Autostart.loop,
             ),
-            const SizedBox(height: 15),
+          ),
+          centerTitle: true,
+        ),
+        body: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              InternIDCard(
+                name: "Kaiehla Espiritu",
+                birthday: "04/14/02",
+                school: "University of Santo Tomas",
+                company: "Symph",
+                position: "UI/UX Designer",
+              ),
+              const SizedBox(height: 15),
 
-            // Additional Cards with Icons
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: const [
-                InfoCard(title: "Start Date", value: "01/28/25", icon: Icons.calendar_today),
-                SizedBox(width: 15),
-                InfoCard(title: "Hours Required", value: "500", icon: Icons.access_time),
-              ],
-            ),
+              // Additional Cards with Icons
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: const [
+                  InfoCard(
+                      title: "Start Date",
+                      value: "01/28/25",
+                      icon: Icons.calendar_today),
+                  SizedBox(width: 15),
+                  InfoCard(
+                      title: "Hours Required",
+                      value: "500",
+                      icon: Icons.access_time),
+                ],
+              ),
 
-            const Spacer(),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: () {
-                  Navigator.pushAndRemoveUntil(
-                    context,
-                    MaterialPageRoute(builder: (context) => const MyApp()),
-                        (route) => false, //
-                  );
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.deepPurple,
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                ),
-                child: const Text(
-                  "Back to Home",
-                  style: TextStyle(color: Colors.white, fontSize: 16),
+              const Spacer(),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () {
+                    Navigator.pushAndRemoveUntil(
+                      context,
+                      MaterialPageRoute(builder: (context) => const MyApp()),
+                      (route) => false, //
+                    );
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.deepPurple,
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                  ),
+                  child: const Text(
+                    "Back to Home",
+                    style: TextStyle(color: Colors.white, fontSize: 16),
+                  ),
                 ),
               ),
-            ),
-            const SizedBox(height: 20),
-          ],
+              const SizedBox(height: 20),
+            ],
+          ),
         ),
-      ),
-      drawer: Drawer(
-        child: ListView(
-          children: [DrwHeader(), DrwListView()],
+        drawer: Drawer(
+          child: ListView(
+            children: [DrwHeader(), DrwListView()],
+          ),
         ),
       ),
     );
@@ -101,7 +125,8 @@ class InfoCard extends StatelessWidget {
               const SizedBox(height: 8),
               Text(
                 title,
-                style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                style:
+                    const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 5),
               Text(
