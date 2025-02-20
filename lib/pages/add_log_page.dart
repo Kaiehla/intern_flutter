@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-
+import 'package:google_fonts/google_fonts.dart';
 import '../main.dart';
 
 
@@ -14,10 +14,13 @@ class add_log_page extends StatelessWidget {
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
+        textTheme: GoogleFonts.manropeTextTheme(),
       ),
+      debugShowCheckedModeBanner: false,
       home: Scaffold(
           appBar: AppBar(
-            title: Text("Add Log"),
+            title: Text("Add Progress", style: GoogleFonts.manrope(),),
+            centerTitle: true,
             leading: IconButton(
               icon: Icon(Icons.arrow_back),
               onPressed: () {
@@ -27,8 +30,9 @@ class add_log_page extends StatelessWidget {
           ),
           body: SingleChildScrollView(
               child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  padding: const EdgeInsets.only(left: 16, right: 16, bottom: 16),
                   child: Column(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       TextFieldSection(),
                       ButtonFieldSection()
@@ -74,10 +78,18 @@ class _TextFieldSectionState extends State<TextFieldSection> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
 
-          // text
+          // header
           Text(
-            "Add a new log", // New text at the top
-            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            "Welcome back, Kai!",
+            style: GoogleFonts.instrumentSerif(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              fontStyle: FontStyle.italic,
+            ),
+          ),
+          Text(
+            "What did you work on today?", // New text at the top
+            style: TextStyle(fontSize: 16),
           ),
           // task name
           Padding(
@@ -161,18 +173,28 @@ class ButtonFieldSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: EdgeInsets.only(top: 20),
+      padding: EdgeInsets.only(top: 16),
       child: Row(
         children: [
           Expanded(
             child: FilledButton(
               onPressed: () => Navigator.push(
                   context, MaterialPageRoute(builder: (context) => MyApp())),
+              style: FilledButton.styleFrom(
+                backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  side: BorderSide(color: Colors.black, width: 2),
+                ),
+              ),
               child: Padding(
-                padding: EdgeInsets.symmetric(vertical: 16),
+                padding: EdgeInsets.symmetric(vertical: 12),
                 child: Text(
-                  "Save Log",
-                  style: TextStyle(fontSize: 16),
+                  "Save",
+                  style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                      color: Theme.of(context).colorScheme.onPrimaryContainer),
                 ),
               ),
             ),
