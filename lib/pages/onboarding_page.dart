@@ -1,4 +1,3 @@
-// onboarding_screen.dart
 import 'package:flutter/material.dart';
 import 'package:gif/gif.dart';
 import 'package:intern_flutter/pages/register_page.dart';
