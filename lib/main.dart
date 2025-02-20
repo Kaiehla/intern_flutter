@@ -4,6 +4,8 @@ import 'package:intern_flutter/pages/profile_page.dart';
 import 'package:intern_flutter/pages/register_page.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intern_flutter/pages/weekly_tasks_page.dart';
+import 'package:gif/gif.dart';
+import 'package:intern_flutter/pages/onboarding_page.dart';
 
 void main() {
   runApp(const MyApp());
@@ -27,7 +29,13 @@ class MyApp extends StatelessWidget {
         debugShowCheckedModeBanner: false,
         home: Scaffold(
           appBar: AppBar(
-            title: Text(appTitle),
+            title: SizedBox(
+              height: 42,
+              child: Gif(
+                image: AssetImage("logo.gif"),
+                autostart: Autostart.loop,
+              ),
+            ),
             centerTitle: true,
           ),
           body: SingleChildScrollView(
@@ -36,14 +44,15 @@ class MyApp extends StatelessWidget {
               child: Column(
                 children: [
                   ProgressSection(),
-                  Text("Weekly Progress Reports", style:
-                  TextStyle(
+                  Text(
+                    "Weekly Progress Reports",
+                    style: TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
-                  ),
+                    ),
                   ),
                   WeeklyProgressSection()
-                  ],
+                ],
               ),
             ),
           ),
@@ -69,19 +78,21 @@ class _Drwheader extends State<DrwHeader> {
   @override
   Widget build(BuildContext context) {
     return DrawerHeader(
-      decoration: BoxDecoration(color: Colors.black),
       child: Column(
         children: [
-          CircleAvatar(
-            backgroundImage: AssetImage('assets/Kaiehla.jpg'),
-            radius: 40,
+          Padding(
+            padding: EdgeInsets.all(16),
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: SizedBox(
+                height: 100,
+                child: Gif(
+                  image: AssetImage("logo.gif"),
+                  autostart: Autostart.loop,
+                ),
+              ),
+            ),
           ),
-          SizedBox(height: 30),
-          Text(
-            "Kaiehla Espiritu",
-            style: TextStyle(
-                color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
-          )
         ],
       ),
     );
@@ -114,8 +125,8 @@ class _DrwListView extends State<DrwListView> {
         ListTile(
           title: Text("Add Entry"),
           leading: Icon(Icons.add),
-          onTap: () => Navigator.push(context,
-              MaterialPageRoute(builder: (context) => add_log_page())),
+          onTap: () => Navigator.push(
+              context, MaterialPageRoute(builder: (context) => add_log_page())),
         ),
         ListTile(
           title: Text("My Intern"),
@@ -123,12 +134,18 @@ class _DrwListView extends State<DrwListView> {
           onTap: () => Navigator.push(
               context, MaterialPageRoute(builder: (context) => profile_page())),
         ),
+        ListTile(
+          title: Text("Onboarding"),
+          leading: Icon(Icons.video_collection_outlined),
+          onTap: () => Navigator.push(
+              context, MaterialPageRoute(builder: (context) => onboarding_page())),
+        ),
       ]),
     );
   }
 }
 
-class ProgressSection extends StatelessWidget{
+class ProgressSection extends StatelessWidget {
   const ProgressSection({super.key});
 
   @override
@@ -140,7 +157,8 @@ class ProgressSection extends StatelessWidget{
         children: [
           Center(
             child: Column(
-              mainAxisSize: MainAxisSize.min, // Make the column as small as possible
+              mainAxisSize: MainAxisSize.min,
+              // Make the column as small as possible
               children: [
                 Text(
                   "Expected end of internship by:",
@@ -182,7 +200,8 @@ class ProgressSection extends StatelessWidget{
                     ),
                   ],
                 ),
-                SizedBox(height: 10), //Separator between ProgressIndicator and Hours
+                SizedBox(height: 10),
+                //Separator between ProgressIndicator and Hours
                 Text(
                   "250/500 hours",
                   style: TextStyle(
@@ -216,14 +235,14 @@ class ProgressSection extends StatelessWidget{
   }
 }
 
-class WeeklyProgressSection extends StatelessWidget{
+class WeeklyProgressSection extends StatelessWidget {
   const WeeklyProgressSection({super.key});
 
   @override
-  Widget build(BuildContext context){
-    return Padding(padding: EdgeInsets.all(10),
-      child:
-      Column(
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.all(10),
+      child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Card(
@@ -255,16 +274,13 @@ class WeeklyProgressSection extends StatelessWidget{
           Card(
             child: ListTile(
               leading: Icon(Icons.assignment),
-              title: Text("Weekly Progress Report 2",
-                style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 16
-                ),
+              title: Text(
+                "Weekly Progress Report 2",
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
               ),
-              subtitle: Text("Feb 24, 2025 - Feb 28, 2025",
-                style: TextStyle(
-                    fontSize: 14
-                ),
+              subtitle: Text(
+                "Feb 24, 2025 - Feb 28, 2025",
+                style: TextStyle(fontSize: 14),
               ),
               trailing: Icon(Icons.more_vert),
             ),
@@ -272,16 +288,13 @@ class WeeklyProgressSection extends StatelessWidget{
           Card(
             child: ListTile(
               leading: Icon(Icons.assignment),
-              title: Text("Weekly Progress Report 3",
-                style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 16
-                ),
+              title: Text(
+                "Weekly Progress Report 3",
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
               ),
-              subtitle: Text("Mar 03, 2025 - Mar 07, 2025",
-                style: TextStyle(
-                    fontSize: 14
-                ),
+              subtitle: Text(
+                "Mar 03, 2025 - Mar 07, 2025",
+                style: TextStyle(fontSize: 14),
               ),
               trailing: Icon(Icons.more_vert),
             ),
@@ -289,16 +302,16 @@ class WeeklyProgressSection extends StatelessWidget{
           Card(
             child: ListTile(
               leading: Icon(Icons.assignment),
-              title: Text("Weekly Progress Report 4",
+              title: Text(
+                "Weekly Progress Report 4",
                 style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
                 ),
               ),
-              subtitle: Text("Mar 10, 2025 - Mar 14, 2025",
-                style: TextStyle(
-                    fontSize: 14
-                ),
+              subtitle: Text(
+                "Mar 10, 2025 - Mar 14, 2025",
+                style: TextStyle(fontSize: 14),
               ),
               trailing: Icon(Icons.more_vert),
             ),
