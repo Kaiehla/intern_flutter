@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:intern_flutter/main.dart';
+import 'package:intern_flutter/pages/register_page.dart';
 
 class profile_page extends StatelessWidget {
   const profile_page({super.key});
@@ -16,47 +18,25 @@ class profile_page extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            const CircleAvatar(
-              radius: 60,
-              backgroundColor: Colors.grey,
-              child: Icon(
-                Icons.person,
-                size: 60,
-                color: Colors.white,
-              ),
+            InternIDCard(
+              name: "Kaiehla Espiritu",
+              birthday: "04/14/02",
+              school: "University of Santo Tomas",
+              company: "Symph",
+              position: "UI/UX Designer",
             ),
             const SizedBox(height: 15),
-            const Text(
-              "Kaiehla Espiritu",
-              style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
-              textAlign: TextAlign.center,
+
+            // Additional Cards with Icons
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: const [
+                InfoCard(title: "Start Date", value: "01/28/25", icon: Icons.calendar_today),
+                SizedBox(width: 15),
+                InfoCard(title: "Hours Required", value: "500", icon: Icons.access_time),
+              ],
             ),
-            const Text(
-              "University of Santo Tomas - Manila",
-              style: TextStyle(fontSize: 16, color: Colors.black54),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 15),
-            const ListTile(
-              leading: Icon(Icons.calendar_today),
-              title: Text("Birthdate"),
-              subtitle: Text("04/14/02"),
-            ),
-            const ListTile(
-              leading: Icon(Icons.badge),
-              title: Text("Intern Position"),
-              subtitle: Text("UI/UX Designer"),
-            ),
-            const ListTile(
-              leading: Icon(Icons.apartment),
-              title: Text("Company"),
-              subtitle: Text("Symph"),
-            ),
-            const ListTile(
-              leading: Icon(Icons.access_time),
-              title: Text("Hours Required"),
-              subtitle: Text("500"),
-            ),
+
             const Spacer(),
             SizedBox(
               width: double.infinity,
@@ -65,7 +45,7 @@ class profile_page extends StatelessWidget {
                   Navigator.pushAndRemoveUntil(
                     context,
                     MaterialPageRoute(builder: (context) => const MyApp()),
-                        (route) => false, // removes all previous routes
+                        (route) => false, //
                   );
                 },
                 style: ElevatedButton.styleFrom(
@@ -85,6 +65,51 @@ class profile_page extends StatelessWidget {
       drawer: Drawer(
         child: ListView(
           children: [DrwHeader(), DrwListView()],
+        ),
+      ),
+    );
+  }
+}
+
+class InfoCard extends StatelessWidget {
+  final String title;
+  final String value;
+  final IconData icon;
+
+  const InfoCard({
+    required this.title,
+    required this.value,
+    required this.icon,
+    super.key,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Expanded(
+      child: Card(
+        shape: RoundedRectangleBorder(
+          side: const BorderSide(color: Colors.black, width: 2),
+          borderRadius: BorderRadius.circular(16),
+        ),
+        color: Colors.white,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 10),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(icon, size: 30, color: Colors.deepPurple), // Icon at the top
+              const SizedBox(height: 8),
+              Text(
+                title,
+                style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 5),
+              Text(
+                value,
+                style: const TextStyle(fontSize: 14),
+              ),
+            ],
+          ),
         ),
       ),
     );
