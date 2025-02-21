@@ -13,6 +13,7 @@ class weekly_tasks_page extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
       ),
+      debugShowCheckedModeBanner: false,
       home: Scaffold(
           appBar: AppBar(
             title: Text(""),
@@ -25,12 +26,13 @@ class weekly_tasks_page extends StatelessWidget {
           ),
           body: SingleChildScrollView(
               child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
                   child: Column(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text("Weekly Progress Report 1", style:
                       TextStyle(
-                        fontSize: 20,
+                        fontSize: 24,
                         fontWeight: FontWeight.bold,
                         fontStyle: FontStyle.italic,
                         fontFamily: GoogleFonts.instrumentSerif().fontFamily,
@@ -45,11 +47,12 @@ class weekly_tasks_page extends StatelessWidget {
                       ChooseDayChip(),
                       SizedBox(height: 20),
                       TaskPerDaySection(),
+                      SizedBox(height: 59),
                       ButtonFieldSection()
                     ],
                   )
               )
-          )
+          ),
       ),
     );
   }
@@ -100,7 +103,7 @@ class TaskPerDaySection extends StatelessWidget{
       children: [
         Text("Day 1 of Week 1 - Feb 07, 2025", style:
         TextStyle(
-            color: Theme.of(context).colorScheme.primary
+          color: Theme.of(context).colorScheme.primary
         ),
         ),
         SizedBox(height: 5,),
@@ -119,6 +122,7 @@ class TaskPerDaySection extends StatelessWidget{
                   style: TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 20,
+                      fontStyle: FontStyle.italic,
                       fontFamily: GoogleFonts.instrumentSerif().fontFamily
                   ),
                 ),
@@ -157,6 +161,7 @@ class TaskPerDaySection extends StatelessWidget{
                   style: TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 20,
+                      fontStyle: FontStyle.italic,
                       fontFamily: GoogleFonts.instrumentSerif().fontFamily
                   ),
                 ),
@@ -200,6 +205,7 @@ class TaskPerDaySection extends StatelessWidget{
                   style: TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 20,
+                      fontStyle: FontStyle.italic,
                       fontFamily: GoogleFonts.instrumentSerif().fontFamily
                   ),
                 ),
@@ -236,6 +242,7 @@ class TaskPerDaySection extends StatelessWidget{
                   style: TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 20,
+                      fontStyle: FontStyle.italic,
                       fontFamily: GoogleFonts.instrumentSerif().fontFamily
                   ),
                 ),
@@ -269,32 +276,36 @@ class ButtonFieldSection extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: EdgeInsets.only(top: 16),
-      child: Row(
-        children: [
-          Expanded(
-            child: FilledButton(
-              onPressed: () => Navigator.push(
-                  context, MaterialPageRoute(builder: (context) => add_log_page())),
-              style: FilledButton.styleFrom(
-                backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  side: BorderSide(color: Colors.black, width: 2),
+      child: SizedBox(
+        width: double.infinity,
+        child: Row(
+          children: [
+            Expanded(
+              child: FilledButton(
+                onPressed: () => Navigator.push(
+                    context, MaterialPageRoute(builder: (context) => add_log_page())),
+                style: FilledButton.styleFrom(
+                  backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    side: BorderSide(color: Colors.black, width: 2),
+                  ),
                 ),
-              ),
-              child: Padding(
-                padding: EdgeInsets.symmetric(vertical: 12),
-                child: Text(
-                  "Add New Log",
-                  style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.bold,
-                      color: Theme.of(context).colorScheme.onPrimaryContainer),
+                child: Padding(
+                  padding: EdgeInsets.symmetric(vertical: 12),
+                  child: Text(
+                    "Add Progress",
+                    style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                        color:
+                        Theme.of(context).colorScheme.onPrimaryContainer),
+                  ),
                 ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

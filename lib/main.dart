@@ -90,7 +90,7 @@ class _DrwListView extends State<DrwListView> {
               MaterialPageRoute(builder: (context) => register_page())),
         ),
         ListTile(
-          title: Text("Add Entry"),
+          title: Text("Add Progress"),
           leading: Icon(Icons.add),
           onTap: () => Navigator.push(
               context, MaterialPageRoute(builder: (context) => add_log_page())),
@@ -131,11 +131,11 @@ class ProgressSection extends StatelessWidget{
                   bottomRight: Radius.circular(30),
                 )
             ),
-            padding: EdgeInsets.all(7),
+            padding: EdgeInsets.all(24),
             child:
             Center(
               child: Column(
-                mainAxisSize: MainAxisSize.min, // Make the column as small as possible
+                mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
                     "Expected end of internship by:",
@@ -182,15 +182,14 @@ class ProgressSection extends StatelessWidget{
                     "300/500 hours",
                     style: TextStyle(
                       fontSize: 23,
-                      fontWeight: FontWeight.w600,
+                      fontWeight: FontWeight.w900,
                       color: Theme.of(context).colorScheme.primary,
                     ),
                   ),
                   Text(
-                    "UI/UX Intern",
+                    "UI/UX Designer",
                     style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w600,
+                      fontSize: 24,
                       color: Colors.black,
                       fontStyle: FontStyle.italic,
                       fontFamily: GoogleFonts.instrumentSerif().fontFamily,
@@ -200,10 +199,8 @@ class ProgressSection extends StatelessWidget{
                     "Symph",
                     style: TextStyle(
                       fontSize: 18,
-                      fontWeight: FontWeight.w600,
                       color: Colors.black,
-                      fontStyle: FontStyle.italic,
-                      fontFamily: GoogleFonts.instrumentSerif().fontFamily,
+                      fontFamily: GoogleFonts.manrope().fontFamily,
                     ),
                   ),
                 ],
@@ -256,7 +253,7 @@ class WeeklyProgressSection extends StatelessWidget{
               ),
               trailing: Icon(Icons.more_vert),
               onTap: () {
-                // Navigate to the target page
+                // lipat page
                 Navigator.push(
                   context,
                   MaterialPageRoute(builder: (context) => weekly_tasks_page()),
@@ -494,13 +491,13 @@ class _AddWPRState extends State<AddWPR> {
         ),
         ElevatedButton(
           onPressed: () {
-            // Add save logic here
             Navigator.pop(context);
           },
           style: FilledButton.styleFrom(
             backgroundColor: Theme.of(context).colorScheme.inversePrimary,
           ),
           child: Text("Save",
+            //wala pang logic
             style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.bold,
