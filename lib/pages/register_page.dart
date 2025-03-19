@@ -3,6 +3,27 @@ import 'package:flutter/services.dart';
 import 'package:intern_flutter/main.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:gif/gif.dart';
+import 'package:intern_flutter/utils/validations.dart';
+
+// Controllers para makuha yung value ng textfields
+final TextEditingController _pronounsController = TextEditingController();
+final TextEditingController _nameController = TextEditingController();
+final TextEditingController _birthdayController = TextEditingController();
+final TextEditingController _schoolController = TextEditingController();
+final TextEditingController _companyController = TextEditingController();
+final TextEditingController _positionController = TextEditingController();
+final TextEditingController _startDateController = TextEditingController();
+final TextEditingController _hoursRequiredController = TextEditingController();
+
+// Validation states para sa textfields
+String? _selectedPronoun = "He/Him";
+bool _validateName = false;
+bool _validateBirthday = false;
+bool _validateSchool = false;
+bool _validateCompany = false;
+bool _validatePosition = false;
+bool _validateStartDate = false;
+bool _validateHoursRequired = false;
 
 class register_page extends StatelessWidget {
   const register_page({super.key});
@@ -43,7 +64,7 @@ class register_page extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       TextFieldSection(),
-                      ButtonFieldSection(),
+                      // ButtonFieldSection(),
                     ],
                   ),
                 ),
@@ -70,18 +91,9 @@ class TextFieldSection extends StatefulWidget {
 }
 
 class _TextFieldSectionState extends State<TextFieldSection> {
-  // Controllers para makuha yung value ng textfields
-  final TextEditingController _nameController = TextEditingController();
-  final TextEditingController _birthdayController = TextEditingController();
-  final TextEditingController _schoolController = TextEditingController();
-  final TextEditingController _companyController = TextEditingController();
-  final TextEditingController _positionController = TextEditingController();
-
-  // DateTime para sa datepickers 2 states para sa 2 datepickers - birthday at start date
   DateTime? _selectedBirthday;
   DateTime? _selectedStartDate;
 
-  // Birthday Datepicker - frontend validation palang to para bawal piliin yung future date
   void _pickBirthday(BuildContext context) async {
     DateTime? pickedBirthday = await showDatePicker(
       context: context,
@@ -98,7 +110,6 @@ class _TextFieldSectionState extends State<TextFieldSection> {
     }
   }
 
-  // Start Date Datepicker
   void _pickStartDate(BuildContext context) async {
     DateTime? pickedStartDate = await showDatePicker(
       context: context,
@@ -113,6 +124,20 @@ class _TextFieldSectionState extends State<TextFieldSection> {
     }
   }
 
+  // validations
+  void validateIDFields() {
+    setState(() {
+      _selectedPronoun == null;
+      _validateName = _nameController.text.isEmpty;
+      _validateBirthday = _birthdayController.text.isEmpty;
+      _validateSchool = _schoolController.text.isEmpty;
+      _validateCompany = _companyController.text.isEmpty;
+      _validatePosition = _positionController.text.isEmpty;
+      _validateStartDate = _selectedStartDate == null;
+      _validateHoursRequired = _hoursRequiredController.text.isEmpty;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Column(
@@ -122,7 +147,6 @@ class _TextFieldSectionState extends State<TextFieldSection> {
           alignment: Alignment.center,
           child: HeaderLabelSection("Create an Intern ID"),
         ),
-        // Intern Card - rereflect dito yung tinatype sa baba; connected to sa kabilang stateless class, pinapasa lang dito sa class yung tinatype from textfields via params
         InternIDCard(
           name: _nameController.text,
           birthday: _birthdayController.text,
@@ -130,21 +154,22 @@ class _TextFieldSectionState extends State<TextFieldSection> {
           company: _companyController.text,
           position: _positionController.text,
         ),
-
-        // Spacing - pwedeng padding or sizedbox, mas trip ko lang tong sizedbox hehe
         SizedBox(height: 16),
 
-        // Text Fields
+        // Form Inputs
         Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            //  Pronouns Dropdown
+            // Pronouns
             Expanded(
               flex: 1,
               child: DropdownButtonFormField<String>(
+                value: _selectedPronoun,
                 isExpanded: true,
                 decoration: InputDecoration(
                   labelText: "Pronouns",
                   border: OutlineInputBorder(),
+
                 ),
                 items: ["He/Him", "She/Her", "They/Them"].map((String value) {
                   return DropdownMenuItem<String>(
@@ -154,8 +179,14 @@ class _TextFieldSectionState extends State<TextFieldSection> {
                 }).toList(),
                 onChanged: (String? newValue) {
                   setState(() {
-                    // Handle the change
+                    _selectedPronoun = newValue;
                   });
+                },
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Please select a pronoun';
+                  }
+                  return null;
                 },
               ),
             ),
@@ -166,10 +197,16 @@ class _TextFieldSectionState extends State<TextFieldSection> {
               flex: 2,
               child: TextField(
                 controller: _nameController,
+                maxLength: 25,
                 decoration: InputDecoration(
                   labelText: "Name",
                   border: OutlineInputBorder(),
+                  errorText: _validateName ? "Enter a valid Name" : null,
                 ),
+                inputFormatters: <TextInputFormatter>[
+                  LengthLimitingTextInputFormatter(50),
+                  ...Validations.strictDenyPatterns.map((pattern) => FilteringTextInputFormatter.deny(RegExp(pattern))), // Apply deny filters
+                ],
                 onChanged: (text) {
                   setState(() {});
                 },
@@ -178,9 +215,9 @@ class _TextFieldSectionState extends State<TextFieldSection> {
           ],
         ),
 
-        // Birthday - padding and sizedbox same lang ginagawa basta para sa spacing
+        // Birthday
         Padding(
-          padding: EdgeInsets.only(top: 16),
+          padding: EdgeInsets.only(top: 8),
           child: TextField(
             controller: _birthdayController,
             readOnly: true,
@@ -197,6 +234,7 @@ class _TextFieldSectionState extends State<TextFieldSection> {
                 icon: Icon(Icons.cake_rounded),
                 onPressed: () => _pickBirthday(context),
               ),
+              errorText: _validateBirthday ? "Enter a valid Birthday" : null,
             ),
             onChanged: (text) {
               setState(() {});
@@ -209,62 +247,74 @@ class _TextFieldSectionState extends State<TextFieldSection> {
           padding: EdgeInsets.only(top: 16),
           child: TextField(
             controller: _schoolController,
+            maxLength: 30,
             decoration: InputDecoration(
               labelText: "School",
               border: OutlineInputBorder(),
+              errorText: _validateSchool ? "Enter a valid School" : null,
             ),
+            inputFormatters: <TextInputFormatter>[
+              LengthLimitingTextInputFormatter(30),
+              ...Validations.generalDenyPatterns.map((pattern) => FilteringTextInputFormatter.deny(RegExp(pattern))), // Apply deny filters
+            ],
             onChanged: (text) {
               setState(() {});
             },
           ),
         ),
-        SizedBox(height: 4),
-
-        // Divider
         Divider(
           color: Theme.of(context).colorScheme.outlineVariant,
           thickness: 1,
         ),
 
-        // Company
+        // Internship Company
         Padding(
           padding: EdgeInsets.only(top: 4),
           child: TextField(
             controller: _companyController,
+            maxLength: 30,
             decoration: InputDecoration(
               labelText: "Internship Company",
               border: OutlineInputBorder(),
+              errorText: _validateCompany ? "Enter a valid Company" : null,
             ),
+            inputFormatters: <TextInputFormatter>[
+              LengthLimitingTextInputFormatter(30),
+              ...Validations.generalDenyPatterns.map((pattern) => FilteringTextInputFormatter.deny(RegExp(pattern))), // Apply deny filters
+            ],
             onChanged: (text) {
               setState(() {});
             },
           ),
         ),
-
-        // Position
         Padding(
-          padding: EdgeInsets.only(top: 16),
+          padding: EdgeInsets.only(top: 8),
           child: TextField(
             controller: _positionController,
+            maxLength: 30,
             decoration: InputDecoration(
               labelText: "Intern Position",
               border: OutlineInputBorder(),
+              errorText: _validatePosition ? "Enter a valid Position" : null,
             ),
+            inputFormatters: <TextInputFormatter>[
+              LengthLimitingTextInputFormatter(30),
+              ...Validations.generalDenyPatterns.map((pattern) => FilteringTextInputFormatter.deny(RegExp(pattern))), // Apply deny filters
+            ],
             onChanged: (text) {
               setState(() {});
             },
           ),
         ),
-
-        // Start Date & Hours Required Row
         Padding(
-          padding: EdgeInsets.only(top: 16),
+          padding: EdgeInsets.only(top: 8),
           child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Start Date
               Expanded(
                 child: TextField(
                   readOnly: true,
+                  controller: _startDateController,
                   decoration: InputDecoration(
                     labelText: "Start Date",
                     hintText: _selectedStartDate != null
@@ -278,6 +328,8 @@ class _TextFieldSectionState extends State<TextFieldSection> {
                       icon: Icon(Icons.today),
                       onPressed: () => _pickStartDate(context),
                     ),
+                    errorText:
+                        _validateStartDate ? "Enter a valid start date" : null,
                   ),
                   onChanged: (text) {
                     setState(() {});
@@ -285,21 +337,61 @@ class _TextFieldSectionState extends State<TextFieldSection> {
                 ),
               ),
               SizedBox(width: 16),
-
-              // Hours Required
               Expanded(
                 child: TextField(
+                  controller: _hoursRequiredController,
+                  maxLength: 4,
                   decoration: InputDecoration(
-                      labelText: "Hours Required",
-                      border: OutlineInputBorder(),
-                      suffixIcon: Icon(Icons.timer_outlined)),
+                    labelText: "Hours Required",
+                    border: OutlineInputBorder(),
+                    suffixIcon: Icon(Icons.timer_outlined),
+                    errorText: _validateHoursRequired
+                        ? "Enter hours in numbers"
+                        : null,
+                  ),
                   keyboardType: TextInputType.number,
                   inputFormatters: <TextInputFormatter>[
+                    LengthLimitingTextInputFormatter(4),
                     FilteringTextInputFormatter.digitsOnly
                   ],
                   onChanged: (text) {
                     setState(() {});
                   },
+                ),
+              ),
+            ],
+          ),
+        ),
+        Padding(
+          padding: EdgeInsets.only(top: 16),
+          child: Row(
+            children: [
+              Expanded(
+                child: FilledButton(
+                  onPressed: () {
+                    setState(() {
+                      validateIDFields();
+                    });
+                  },
+                  style: FilledButton.styleFrom(
+                    backgroundColor:
+                        Theme.of(context).colorScheme.inversePrimary,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      side: BorderSide(color: Colors.black, width: 2),
+                    ),
+                  ),
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(vertical: 12),
+                    child: Text(
+                      "Save",
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                        color: Theme.of(context).colorScheme.onPrimaryContainer,
+                      ),
+                    ),
+                  ),
                 ),
               ),
             ],
@@ -578,40 +670,47 @@ class DottedLine extends StatelessWidget {
   }
 }
 
-class ButtonFieldSection extends StatelessWidget {
-  const ButtonFieldSection({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: EdgeInsets.only(top: 16),
-      child: Row(
-        children: [
-          Expanded(
-            child: FilledButton(
-              onPressed: () => Navigator.push(
-                  context, MaterialPageRoute(builder: (context) => MyApp())),
-              style: FilledButton.styleFrom(
-                backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  side: BorderSide(color: Colors.black, width: 2),
-                ),
-              ),
-              child: Padding(
-                padding: EdgeInsets.symmetric(vertical: 12),
-                child: Text(
-                  "Save",
-                  style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.bold,
-                      color: Theme.of(context).colorScheme.onPrimaryContainer),
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
+// class ButtonFieldSection extends StatelessWidget {
+//   const ButtonFieldSection({super.key});
+//
+//   @override
+//   Widget build(BuildContext context) {
+//     return Padding(
+//       padding: EdgeInsets.only(top: 16),
+//       child: Row(
+//         children: [
+//           Expanded(
+//             child: FilledButton(
+//               onPressed: _buttonDisable
+//                   ? null
+//                   : () => Navigator.push(
+//                       context, MaterialPageRoute(builder: (context) => MyApp())),
+//               style: FilledButton.styleFrom(
+//                 backgroundColor: _buttonDisable
+//                     ? Colors.grey
+//                     : Theme.of(context).colorScheme.inversePrimary,
+//                 shape: RoundedRectangleBorder(
+//                   borderRadius: BorderRadius.circular(12),
+//                   side: BorderSide(color: Colors.black, width: 2),
+//                 ),
+//               ),
+//               child: Padding(
+//                 padding: EdgeInsets.symmetric(vertical: 12),
+//                 child: Text(
+//                   "Save",
+//                   style: TextStyle(
+//                     fontSize: 14,
+//                     fontWeight: FontWeight.bold,
+//                     color: _buttonDisable
+//                         ? Colors.black38
+//                         : Theme.of(context).colorScheme.onPrimaryContainer,
+//                   ),
+//                 ),
+//               ),
+//             ),
+//           ),
+//         ],
+//       ),
+//     );
+//   }
+// }

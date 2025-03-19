@@ -9,6 +9,7 @@ import 'package:intern_flutter/pages/onboarding_page.dart';
 
 void main() {
   runApp(const MyApp());
+  // runApp(const register_page());
 }
 
 class MyApp extends StatelessWidget {
