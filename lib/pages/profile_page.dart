@@ -31,10 +31,11 @@ class profile_page extends StatelessWidget {
           centerTitle: true,
         ),
         body: Padding(
-          padding: const EdgeInsets.all(20),
+          padding: const EdgeInsets.all(16),
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              HeaderSection("My Intern"),
               InternIDCard(
                 name: "Kaiehla Espiritu",
                 birthday: "04/14/02",
@@ -63,25 +64,34 @@ class profile_page extends StatelessWidget {
               const Spacer(),
               SizedBox(
                 width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: () {
-                    Navigator.pushAndRemoveUntil(
-                      context,
-                      MaterialPageRoute(builder: (context) => const MyApp()),
-                      (route) => false, //
-                    );
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.deepPurple,
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                  ),
-                  child: const Text(
-                    "Back to Home",
-                    style: TextStyle(color: Colors.white, fontSize: 16),
-                  ),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: FilledButton(
+                        onPressed: () => Navigator.push(
+                            context, MaterialPageRoute(builder: (context) => MyApp())),
+                        style: FilledButton.styleFrom(
+                          backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            side: BorderSide(color: Colors.black, width: 2),
+                          ),
+                        ),
+                        child: Padding(
+                          padding: EdgeInsets.symmetric(vertical: 12),
+                          child: Text(
+                            "Back to Home",
+                            style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.bold,
+                                color: Theme.of(context).colorScheme.onPrimaryContainer),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
-              const SizedBox(height: 20),
             ],
           ),
         ),
@@ -136,6 +146,30 @@ class InfoCard extends StatelessWidget {
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+// Label
+class HeaderSection extends StatelessWidget {
+  final String label;
+
+  const HeaderSection(this.label, {super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.only(bottom: 12),
+      child: Text(
+        label,
+        style: TextStyle(
+          fontSize: 24,
+          fontWeight: FontWeight.bold,
+          fontStyle: FontStyle.italic,
+          fontFamily: GoogleFonts.instrumentSerif().fontFamily,
+        ),
+        textAlign: TextAlign.start,
       ),
     );
   }

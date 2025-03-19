@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:intern_flutter/pages/add_log_page.dart';
 
 class weekly_tasks_page extends StatelessWidget {
   const weekly_tasks_page({super.key});
@@ -12,6 +13,7 @@ class weekly_tasks_page extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
       ),
+      debugShowCheckedModeBanner: false,
       home: Scaffold(
           appBar: AppBar(
             title: Text(""),
@@ -24,30 +26,33 @@ class weekly_tasks_page extends StatelessWidget {
           ),
           body: SingleChildScrollView(
               child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
                   child: Column(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text("Weekly Progress Report 1", style:
                       TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                        fontStyle: FontStyle.italic,
+                        fontFamily: GoogleFonts.instrumentSerif().fontFamily,
                       ),
                       ),
                       Text("39 hours completed this week", style:
                       TextStyle(
-                          fontSize: 15,
+                        fontSize: 16,
                       ),
                       ),
                       SizedBox(height: 10),
                       ChooseDayChip(),
                       SizedBox(height: 20),
                       TaskPerDaySection(),
-                      SizedBox(height: 15),
-                      TaskPerDaySection()
+                      SizedBox(height: 59),
+                      ButtonFieldSection()
                     ],
                   )
               )
-          )
+          ),
       ),
     );
   }
@@ -69,7 +74,12 @@ class _ChooseDayChip extends State<ChooseDayChip> {
         spacing: 5.0,
         children: days.map((day) {
           return ChoiceChip(
-            label: Text(day),
+            label: Text(day, style:
+            TextStyle(
+                fontWeight: FontWeight.bold,
+                fontFamily: GoogleFonts.instrumentSerif().fontFamily
+            ),
+            ),
             selected: _selectedDay == day,
             onSelected: (bool selected) {
               setState(() {
@@ -89,71 +99,214 @@ class TaskPerDaySection extends StatelessWidget{
   @override
   Widget build(BuildContext context){
     return Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text("Day 1 of Week 1 - Feb 07, 2025"),
-          SizedBox(height: 5,),
-          Card.filled(
-            child: ListTile(
-              title: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    "Task Name",
-                    style: TextStyle(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text("Day 1 of Week 1 - Feb 07, 2025", style:
+        TextStyle(
+          color: Theme.of(context).colorScheme.primary
+        ),
+        ),
+        SizedBox(height: 5,),
+        Card(
+          color: Colors.white,
+          shape: RoundedRectangleBorder(
+              side: BorderSide(color: Colors.black, width: 2),
+              borderRadius: BorderRadius.circular(16)
+          ),
+          child: ListTile(
+            title: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  "First OJT Task",
+                  style: TextStyle(
                       fontWeight: FontWeight.bold,
-                      fontSize: 16,
-                    ),
+                      fontSize: 20,
+                      fontStyle: FontStyle.italic,
+                      fontFamily: GoogleFonts.instrumentSerif().fontFamily
                   ),
-                  Text(
-                    "Description of task kunyare nalang mahaba to pake nyo ba ha",
-                    style: TextStyle(
-                      fontSize: 14,
-                    ),
+                ),
+                Text(
+                  "Introduction to Symph and signing in using company account",
+                  style: TextStyle(
+                    fontSize: 14,
                   ),
-                  Divider(), // Horizontal line separator
-                  Text(
-                    "2 hours spent",
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: Colors.grey,
-                    ),
+                ),
+                Divider(
+
+                ), // Horizontal line separator
+                Text(
+                  "4 hours spent",
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Colors.black54,
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
-          Card.filled(
-            child: ListTile(
-              title: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    "Task Name Uli Why Not",
-                    style: TextStyle(
+        ),
+        Card(
+          color: Colors.white,
+          shape: RoundedRectangleBorder(
+              side: BorderSide(color: Colors.black, width: 2),
+              borderRadius: BorderRadius.circular(16)
+          ),
+          child: ListTile(
+            title: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  "Second OJT Task",
+                  style: TextStyle(
                       fontWeight: FontWeight.bold,
-                      fontSize: 16,
-                    ),
+                      fontSize: 20,
+                      fontStyle: FontStyle.italic,
+                      fontFamily: GoogleFonts.instrumentSerif().fontFamily
                   ),
-                  Text(
-                    "Description of task kunyare nalang mahaba to pake nyo ba hahahahahah",
+                ),
+                Text(
+                  "Setting up Discord account and signing up to UI/UX Bootcamp",
+                  style: TextStyle(
+                    fontSize: 14,
+                  ),
+                ),
+                Divider(), // Horizontal line separator
+                Text(
+                  "4 hours spent",
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Colors.black54,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        SizedBox(height: 8,),
+        Text("Day 2 of Week 1 - Feb 08, 2025", style:
+        TextStyle(
+            color: Theme.of(context).colorScheme.primary
+        ),
+        ),
+        SizedBox(height: 5,),
+        Card(
+          color: Colors.white,
+          shape: RoundedRectangleBorder(
+              side: BorderSide(color: Colors.black, width: 2),
+              borderRadius: BorderRadius.circular(12)
+          ),
+          child: ListTile(
+            title: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  "Third OJT Task",
+                  style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 20,
+                      fontStyle: FontStyle.italic,
+                      fontFamily: GoogleFonts.instrumentSerif().fontFamily
+                  ),
+                ),
+                Text(
+                  "Attended team-wide meeting for 2 hours with Talent Head",
+                  style: TextStyle(
+                    fontSize: 14,
+                  ),
+                ),
+                Divider(),
+                Text(
+                  "4 hours spent",
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Colors.black54,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        Card(
+          color: Colors.white,
+          shape: RoundedRectangleBorder(
+              side: BorderSide(color: Colors.black, width: 2),
+              borderRadius: BorderRadius.circular(16)
+          ),
+          child: ListTile(
+            title: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  "Fourth OJT Task",
+                  style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 20,
+                      fontStyle: FontStyle.italic,
+                      fontFamily: GoogleFonts.instrumentSerif().fontFamily
+                  ),
+                ),
+                Text(
+                  "Onboarding with supervisor and delegation of team and project",
+                  style: TextStyle(
+                    fontSize: 14,
+                  ),
+                ),
+                Divider(), // Horizontal line separator
+                Text(
+                  "4 hours spent",
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Colors.black54,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class ButtonFieldSection extends StatelessWidget {
+  const ButtonFieldSection({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.only(top: 16),
+      child: SizedBox(
+        width: double.infinity,
+        child: Row(
+          children: [
+            Expanded(
+              child: FilledButton(
+                onPressed: () => Navigator.push(
+                    context, MaterialPageRoute(builder: (context) => add_log_page())),
+                style: FilledButton.styleFrom(
+                  backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    side: BorderSide(color: Colors.black, width: 2),
+                  ),
+                ),
+                child: Padding(
+                  padding: EdgeInsets.symmetric(vertical: 12),
+                  child: Text(
+                    "Add Progress",
                     style: TextStyle(
-                      fontSize: 14,
-                    ),
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                        color:
+                        Theme.of(context).colorScheme.onPrimaryContainer),
                   ),
-                  Divider(), // Horizontal line separator
-                  Text(
-                    "2 hours spent",
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: Colors.grey,
-                    ),
-                  ),
-                ],
+                ),
               ),
             ),
-          )
-        ],
-      );
+          ],
+        ),
+      ),
+    );
   }
 }

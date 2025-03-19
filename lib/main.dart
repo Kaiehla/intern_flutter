@@ -28,41 +28,8 @@ class MyApp extends StatelessWidget {
           textTheme: GoogleFonts.manropeTextTheme(),
         ),
         debugShowCheckedModeBanner: false,
-        home: Scaffold(
-          appBar: AppBar(
-            title: SizedBox(
-              height: 42,
-              child: Gif(
-                image: AssetImage("logo.gif"),
-                autostart: Autostart.loop,
-              ),
-            ),
-            centerTitle: true,
-          ),
-          body: SingleChildScrollView(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Column(
-                children: [
-                  ProgressSection(),
-                  Text(
-                    "Weekly Progress Reports",
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  WeeklyProgressSection()
-                ],
-              ),
-            ),
-          ),
-          drawer: Drawer(
-            child: ListView(
-              children: [DrwHeader(), DrwListView()],
-            ),
-          ),
-        ));
+        home: const HomeScreen()
+    );
   }
 }
 
@@ -124,7 +91,7 @@ class _DrwListView extends State<DrwListView> {
               MaterialPageRoute(builder: (context) => register_page())),
         ),
         ListTile(
-          title: Text("Add Entry"),
+          title: Text("Add Progress"),
           leading: Icon(Icons.add),
           onTap: () => Navigator.push(
               context, MaterialPageRoute(builder: (context) => add_log_page())),
@@ -146,109 +113,132 @@ class _DrwListView extends State<DrwListView> {
   }
 }
 
-class ProgressSection extends StatelessWidget {
+class ProgressSection extends StatelessWidget{
   const ProgressSection({super.key});
 
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: EdgeInsets.all(20),
+      padding: EdgeInsets.only(bottom: 8),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Center(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              // Make the column as small as possible
-              children: [
-                Text(
-                  "Expected end of internship by:",
-                  style: TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w400,
-                    color: Colors.black54,
-                  ),
-                ),
-                Text(
-                  "May 02, 2025",
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w400,
-                    color: Colors.black54,
-                  ),
-                ),
-                SizedBox(height: 10),
-                Stack(
-                  alignment: Alignment.center,
-                  children: [
-                    SizedBox(
-                      width: 200,
-                      height: 200,
-                      child: CircularProgressIndicator(
-                        value: 0.6,
-                        strokeWidth: 8,
-                        backgroundColor: Colors.blueGrey,
-                        valueColor: AlwaysStoppedAnimation<Color>(Colors.red),
-                      ),
-                    ),
-                    Text(
-                      "60%",
-                      style: TextStyle(
-                        fontSize: 50,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.black,
-                      ),
-                    ),
-                  ],
-                ),
-                SizedBox(height: 10),
-                //Separator between ProgressIndicator and Hours
-                Text(
-                  "250/500 hours",
-                  style: TextStyle(
-                    fontSize: 23,
-                    fontWeight: FontWeight.w400,
-                    color: Colors.blue,
-                  ),
-                ),
-                Text(
-                  "UI/UX Intern",
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w400,
-                    color: Colors.black54,
-                  ),
-                ),
-                Text(
-                  "Symph",
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w400,
-                    color: Colors.black54,
-                  ),
-                ),
-              ],
+          Container(
+            decoration:
+            BoxDecoration(
+                color: Theme.of(context).colorScheme.primary.withOpacity(0.10),
+                borderRadius: BorderRadius.only(
+                  bottomLeft: Radius.circular(30),
+                  bottomRight: Radius.circular(30),
+                )
             ),
-          ),
+            padding: EdgeInsets.all(24),
+            child:
+            Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    "Expected end of internship by:",
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w400,
+                      color: Colors.black,
+                    ),
+                  ),
+                  Text(
+                    "May 02, 2025",
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w400,
+                      color: Theme.of(context).colorScheme.primary,
+                    ),
+                  ),
+                  SizedBox(height: 15),
+                  Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      SizedBox(
+                        width: 200,
+                        height: 200,
+                        child: CircularProgressIndicator(
+                          value: 0.6,
+                          strokeWidth: 8,
+                          backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+                          valueColor: AlwaysStoppedAnimation<Color>(Theme.of(context).colorScheme.primary),
+                        ),
+                      ),
+                      Text(
+                        "60%",
+                        style: TextStyle(
+                          fontSize: 50,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black,
+                        ),
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: 10), //Separator between ProgressIndicator and Hours
+                  Text(
+                    "300/500 hours",
+                    style: TextStyle(
+                      fontSize: 23,
+                      fontWeight: FontWeight.w900,
+                      color: Theme.of(context).colorScheme.primary,
+                    ),
+                  ),
+                  Text(
+                    "UI/UX Designer",
+                    style: TextStyle(
+                      fontSize: 24,
+                      color: Colors.black,
+                      fontStyle: FontStyle.italic,
+                      fontFamily: GoogleFonts.instrumentSerif().fontFamily,
+                    ),
+                  ),
+                  Text(
+                    "Symph",
+                    style: TextStyle(
+                      fontSize: 18,
+                      color: Colors.black,
+                      fontFamily: GoogleFonts.manrope().fontFamily,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          )
         ],
       ),
     );
   }
 }
 
-class WeeklyProgressSection extends StatelessWidget {
+class WeeklyProgressSection extends StatelessWidget{
   const WeeklyProgressSection({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: EdgeInsets.all(10),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+  Widget build(BuildContext context){
+    return Padding(padding: EdgeInsets.symmetric(vertical: 5),
+      child:
+      Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
+          Text("Weekly Progress Reports", style:
+          TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+          ),
+          ),
+          SizedBox(height: 10,),
           Card(
+            color: Colors.white,
+            shape: RoundedRectangleBorder(
+                side: BorderSide(color: Colors.black, width: 2),
+                borderRadius: BorderRadius.circular(16)
+            ),
             child: ListTile(
-              leading: Icon(Icons.assignment),
+              leading: Icon(Icons.assignment, color: Theme.of(context).colorScheme.primary, size: 30,),
               title: Text(
                 "Weekly Progress Report 1",
                 style: TextStyle(
@@ -264,7 +254,7 @@ class WeeklyProgressSection extends StatelessWidget {
               ),
               trailing: Icon(Icons.more_vert),
               onTap: () {
-                // Navigate to the target page
+                // lipat page
                 Navigator.push(
                   context,
                   MaterialPageRoute(builder: (context) => weekly_tasks_page()),
@@ -273,52 +263,249 @@ class WeeklyProgressSection extends StatelessWidget {
             ),
           ),
           Card(
+            color: Colors.white,
+            shape: RoundedRectangleBorder(
+                side: BorderSide(color: Colors.black, width: 2),
+                borderRadius: BorderRadius.circular(16)
+            ),
             child: ListTile(
-              leading: Icon(Icons.assignment),
-              title: Text(
-                "Weekly Progress Report 2",
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+              leading: Icon(Icons.assignment, color: Theme.of(context).colorScheme.primary, size: 30),
+              title: Text("Weekly Progress Report 2",
+                style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16
+                ),
               ),
-              subtitle: Text(
-                "Feb 24, 2025 - Feb 28, 2025",
-                style: TextStyle(fontSize: 14),
+              subtitle: Text("Feb 24, 2025 - Feb 28, 2025",
+                style: TextStyle(
+                    fontSize: 14
+                ),
               ),
               trailing: Icon(Icons.more_vert),
             ),
           ),
           Card(
+            color: Colors.white,
+            shape: RoundedRectangleBorder(
+                side: BorderSide(color: Colors.black, width: 2),
+                borderRadius: BorderRadius.circular(16)
+            ),
             child: ListTile(
-              leading: Icon(Icons.assignment),
-              title: Text(
-                "Weekly Progress Report 3",
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+              leading: Icon(Icons.assignment, color: Theme.of(context).colorScheme.primary, size: 30),
+              title: Text("Weekly Progress Report 3",
+                style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16
+                ),
               ),
-              subtitle: Text(
-                "Mar 03, 2025 - Mar 07, 2025",
-                style: TextStyle(fontSize: 14),
+              subtitle: Text("Mar 03, 2025 - Mar 07, 2025",
+                style: TextStyle(
+                    fontSize: 14
+                ),
               ),
               trailing: Icon(Icons.more_vert),
             ),
           ),
           Card(
+            color: Colors.white,
+            shape: RoundedRectangleBorder(
+                side: BorderSide(color: Colors.black, width: 2),
+                borderRadius: BorderRadius.circular(16)
+            ),
             child: ListTile(
-              leading: Icon(Icons.assignment),
-              title: Text(
-                "Weekly Progress Report 4",
+              leading: Icon(Icons.assignment, color: Theme.of(context).colorScheme.primary, size: 30),
+              title: Text("Weekly Progress Report 4",
                 style: TextStyle(
                   fontWeight: FontWeight.bold,
                   fontSize: 16,
                 ),
               ),
-              subtitle: Text(
-                "Mar 10, 2025 - Mar 14, 2025",
-                style: TextStyle(fontSize: 14),
+              subtitle: Text("Mar 10, 2025 - Mar 14, 2025",
+                style: TextStyle(
+                    fontSize: 14
+                ),
               ),
               trailing: Icon(Icons.more_vert),
             ),
           ),
         ],
       ),
+    );
+  }
+}
+
+//ito lang nagpagana sa FAB
+class HomeScreen extends StatefulWidget {
+  const HomeScreen({super.key});
+
+  @override
+  _HomeScreenState createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  void _openAddWPRDialog() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AddWPR(); // Open the modal
+      },
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: SizedBox(
+          height: 42,
+          child: Gif(
+            image: AssetImage("logo.gif"),
+            autostart: Autostart.loop,
+          ),
+        ),
+        centerTitle: true,
+      ),
+      body: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: Column(
+            children: [
+              ProgressSection(),
+              WeeklyProgressSection()
+            ],
+          ),
+        ),
+      ),
+      drawer: Drawer(
+        child: ListView(
+          children: [DrwHeader(), DrwListView()],
+        ),
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: _openAddWPRDialog,
+        child: Icon(Icons.add),
+        shape: RoundedRectangleBorder(
+            side: BorderSide(color: Colors.black, width: 2),
+            borderRadius: BorderRadius.circular(16)
+        ),
+      ),
+    );
+  }
+}
+
+class AddWPR extends StatefulWidget {
+  @override
+  _AddWPRState createState() => _AddWPRState();
+}
+
+class _AddWPRState extends State<AddWPR> {
+  DateTime? _selectedStartDate;
+  DateTime? _selectedEndDate;
+
+  TextEditingController _startDateController = TextEditingController();
+  TextEditingController _endDateController = TextEditingController();
+
+  void _pickStartDate(BuildContext context) async {
+    DateTime? pickedStartDate = await showDatePicker(
+      context: context,
+      initialDate: _selectedStartDate ?? DateTime.now(),
+      firstDate: DateTime(1900),
+      lastDate: DateTime.now(),
+    );
+    if (pickedStartDate != null) {
+      setState(() {
+        _selectedStartDate = pickedStartDate;
+        _startDateController.text =
+        "${pickedStartDate.day}/${pickedStartDate.month}/${pickedStartDate.year}"; // Update the TextField value
+      });
+    }
+  }
+
+  void _pickEndDate(BuildContext context) async {
+    DateTime? pickedEndDate = await showDatePicker(
+      context: context,
+      initialDate: _selectedEndDate ?? DateTime.now(),
+      firstDate: DateTime(1900),
+      lastDate: DateTime.now(),
+    );
+    if (pickedEndDate != null) {
+      setState(() {
+        _selectedEndDate = pickedEndDate;
+        _endDateController.text =
+        "${pickedEndDate.day}/${pickedEndDate.month}/${pickedEndDate.year}";
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: Text("Add Weekly Progress Report", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          TextField(
+            decoration: InputDecoration(
+              labelText: "WPR #",
+              border: OutlineInputBorder(),
+            ),
+          ),
+          SizedBox(height: 12),
+          TextField(
+            controller: _startDateController,
+            readOnly: true,
+            decoration: InputDecoration(
+              labelText: "Start Date",
+              hintText: _selectedStartDate != null
+                  ? "${_selectedStartDate!.day}/${_selectedStartDate!.month}/${_selectedStartDate!.year}"
+                  : "dd/mm/yyyy",
+              border: OutlineInputBorder(),
+              suffixIcon: IconButton(
+                icon: Icon(Icons.calendar_month),
+                onPressed: () => _pickStartDate(context),
+              ),
+            ),
+          ),
+          SizedBox(height: 12),
+          // End Date
+          TextField(
+            controller: _endDateController,
+            readOnly: true,
+            decoration: InputDecoration(
+              labelText: "End Date",
+              hintText: _selectedEndDate != null
+                  ? "${_selectedEndDate!.day}/${_selectedEndDate!.month}/${_selectedEndDate!.year}"
+                  : "dd/mm/yyyy",
+              border: OutlineInputBorder(),
+              suffixIcon: IconButton(
+                icon: Icon(Icons.calendar_month),
+                onPressed: () => _pickEndDate(context),
+              ),
+            ),
+          ),
+        ],
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: Text("Cancel"),
+        ),
+        ElevatedButton(
+          onPressed: () {
+            Navigator.pop(context);
+          },
+          style: FilledButton.styleFrom(
+            backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+          ),
+          child: Text("Save",
+            //wala pang logic
+            style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+                color: Theme.of(context).colorScheme.onPrimaryContainer),
+          ),
+        ),
+      ],
     );
   }
 }

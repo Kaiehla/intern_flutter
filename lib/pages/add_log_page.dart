@@ -3,45 +3,39 @@ import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../main.dart';
 
-
 class add_log_page extends StatelessWidget {
   const add_log_page({super.key});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: "Add a log",
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-        useMaterial3: true,
-        textTheme: GoogleFonts.manropeTextTheme(),
-      ),
-      debugShowCheckedModeBanner: false,
-      home: Scaffold(
-          appBar: AppBar(
-            title: Text("Add Progress", style: GoogleFonts.manrope(),),
-            centerTitle: true,
-            leading: IconButton(
-              icon: Icon(Icons.arrow_back),
-              onPressed: () {
-                Navigator.pop(context);
-              },
+        title: "Add a log",
+        theme: ThemeData(
+          colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
+          useMaterial3: true,
+          textTheme: GoogleFonts.manropeTextTheme(),
+        ),
+        debugShowCheckedModeBanner: false,
+        home: Scaffold(
+            appBar: AppBar(
+              title: Text(
+                "Add Progress",
+                style: GoogleFonts.manrope(),
+              ),
+              centerTitle: true,
+              leading: IconButton(
+                icon: Icon(Icons.arrow_back),
+                onPressed: () {
+                  Navigator.pop(context);
+                },
+              ),
             ),
-          ),
-          body: SingleChildScrollView(
-              child: Padding(
-                  padding: const EdgeInsets.only(left: 16, right: 16, bottom: 16),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      TextFieldSection(),
-                      ButtonFieldSection()
-                    ],
-                  )
-              )
-          )
-      ),
-    );
+            body: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [TextFieldSection(), ButtonFieldSection()],
+                ))));
   }
 }
 
@@ -77,12 +71,11 @@ class _TextFieldSectionState extends State<TextFieldSection> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-
           // header
           Text(
             "Welcome back, Kai!",
             style: GoogleFonts.instrumentSerif(
-              fontSize: 20,
+              fontSize: 24,
               fontWeight: FontWeight.bold,
               fontStyle: FontStyle.italic,
             ),
@@ -174,32 +167,36 @@ class ButtonFieldSection extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: EdgeInsets.only(top: 16),
-      child: Row(
-        children: [
-          Expanded(
-            child: FilledButton(
-              onPressed: () => Navigator.push(
-                  context, MaterialPageRoute(builder: (context) => MyApp())),
-              style: FilledButton.styleFrom(
-                backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  side: BorderSide(color: Colors.black, width: 2),
+      child: SizedBox(
+        width: double.infinity,
+        child: Row(
+          children: [
+            Expanded(
+              child: FilledButton(
+                onPressed: () => Navigator.push(
+                    context, MaterialPageRoute(builder: (context) => MyApp())),
+                style: FilledButton.styleFrom(
+                  backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    side: BorderSide(color: Colors.black, width: 2),
+                  ),
                 ),
-              ),
-              child: Padding(
-                padding: EdgeInsets.symmetric(vertical: 12),
-                child: Text(
-                  "Save",
-                  style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.bold,
-                      color: Theme.of(context).colorScheme.onPrimaryContainer),
+                child: Padding(
+                  padding: EdgeInsets.symmetric(vertical: 12),
+                  child: Text(
+                    "Back to Home",
+                    style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                        color:
+                            Theme.of(context).colorScheme.onPrimaryContainer),
+                  ),
                 ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
