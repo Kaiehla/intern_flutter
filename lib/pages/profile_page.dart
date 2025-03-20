@@ -35,7 +35,7 @@ class profile_page extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              HeaderSection("My Intern"),
+              HeaderSection("My Profile"),
               InternIDCard(
                 name: "Kaiehla Espiritu",
                 birthday: "04/14/02",
@@ -45,20 +45,84 @@ class profile_page extends StatelessWidget {
               ),
               const SizedBox(height: 15),
 
-              // Additional Cards with Icons
+              // Info Card Row (Start Date and Hours Req)
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: const [
                   InfoCard(
-                      title: "Start Date",
-                      value: "01/28/25",
-                      icon: Icons.calendar_today),
+                    title: "Start Date",
+                    value: "01/28/25",
+                  ),
                   SizedBox(width: 15),
                   InfoCard(
-                      title: "Hours Required",
-                      value: "500",
-                      icon: Icons.access_time),
+                    title: "Hours Required",
+                    value: "500",
+                  ),
                 ],
+              ),
+
+              // General Settings Row
+              Padding(
+                padding: const EdgeInsets.only(top: 16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start, // Align the label and card to the left
+                  children: [
+                    const Text(
+                      "General", // Label above the GeneralCard
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold, // Make it prominent
+                      ),
+                    ),
+                    const SizedBox(height: 8), // Spacing between label and card
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Expanded(
+                          child: GeneralCard(
+                            items: const [
+                              {'icon': Icons.badge_outlined, 'text': 'Edit My Intern ID'},
+                              {'icon': Icons.calendar_month_rounded, 'text': 'Edit Internship Hours & Start Date'},
+                              {'icon': Icons.file_upload_outlined, 'text': 'Export all progress and data'},
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+
+              // Settings Row
+              Padding(
+                padding: const EdgeInsets.only(top: 16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      "Settings", // Add label above the card
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Expanded(
+                          child: SettingsCard(
+                            items: const [
+                              {'icon': Icons.warning_amber_rounded, 'text': 'Erase all my progress and data'},
+                              {'icon': Icons.bug_report_outlined, 'text': 'Report a problem'},
+                              {'icon': Icons.fact_check_outlined, 'text': 'Terms and Conditions'},
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
               ),
 
               const Spacer(),
@@ -105,46 +169,149 @@ class profile_page extends StatelessWidget {
   }
 }
 
+class GeneralCard extends StatelessWidget {
+  final List<Map<String, dynamic>> items;
+
+  const GeneralCard({super.key, required this.items});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 15),
+      decoration: BoxDecoration(
+        color: const Color.fromARGB(64, 251, 99, 156),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.black, width: 2), // Black border
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: items.map((item) {
+          return Column(
+            children: [
+              Row(
+                children: [
+                  Icon(
+                    item['icon'],
+                    size: 18,
+                    color: Colors.black,
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    item['text'],
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.normal,
+                    ),
+                  ),
+                ],
+              ),
+              if (item != items.last)
+                const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 8),
+                  child: DottedLine(
+                    padding: 1, // Adjust if needed
+                    color: Colors.black, // Match the color of the divider
+                  ),
+                ),
+            ],
+          );
+        }).toList(),
+      ),
+    );
+  }
+}
+
+class SettingsCard extends StatelessWidget {
+  final List<Map<String, dynamic>> items;
+
+  const SettingsCard({super.key, required this.items});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 15),
+      decoration: BoxDecoration(
+        color: const Color.fromARGB(64, 144, 141, 254),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.black, width: 2), // Black border
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: items.map((item) {
+          return Column(
+            children: [
+              Row(
+                children: [
+                  Icon(
+                    item['icon'],
+                    size: 18,
+                    color: Colors.black,
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    item['text'],
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.normal,
+                    ),
+                  ),
+                ],
+              ),
+              if (item != items.last)
+                const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 8),
+                  child: DottedLine(
+                    padding: 1, // Adjust if needed
+                    color: Colors.black, // Match the color of the divider
+                  ),
+                ),
+            ],
+          );
+        }).toList(),
+      ),
+    );
+  }
+}
+
 class InfoCard extends StatelessWidget {
   final String title;
   final String value;
-  final IconData icon;
 
   const InfoCard({
     required this.title,
     required this.value,
-    required this.icon,
     super.key,
   });
 
   @override
   Widget build(BuildContext context) {
     return Expanded(
-      child: Card(
-        shape: RoundedRectangleBorder(
-          side: const BorderSide(color: Colors.black, width: 2),
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 15),
+        decoration: BoxDecoration(
+          color: const Color(0xFFFCE520),
           borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: Colors.black, width: 2), // Black border
         ),
-        color: Colors.white,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 10),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(icon, size: 30, color: Colors.deepPurple), // Icon at the top
-              const SizedBox(height: 8),
-              Text(
-                title,
-                style:
-                    const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween, // Space between text
+          children: [
+            Text(
+              title,
+              style: const TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+                fontStyle: FontStyle.italic, // Italic title
               ),
-              const SizedBox(height: 5),
-              Text(
-                value,
-                style: const TextStyle(fontSize: 14),
+            ),
+            Text(
+              value,
+              style: const TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.normal,
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
@@ -171,6 +338,43 @@ class HeaderSection extends StatelessWidget {
         ),
         textAlign: TextAlign.start,
       ),
+    );
+  }
+}
+
+class DottedLine extends StatelessWidget {
+  final double padding;
+  final Color color;
+
+  const DottedLine({this.padding = 1, this.color = Colors.black, Key? key})
+      : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final boxWidth = constraints.constrainWidth();
+        final dashWidth = 1.0;
+        final dashHeight = 1.0;
+        final dashCount = (boxWidth / (2 * dashWidth)).floor();
+        return Flex(
+          children: List.generate(dashCount, (_) {
+            return Padding(
+              padding: const EdgeInsets.only(top: 3.0, bottom: 3.0),
+              // Adjust the padding value as needed
+              child: SizedBox(
+                width: dashWidth,
+                height: dashHeight,
+                child: DecoratedBox(
+                  decoration: BoxDecoration(color: color),
+                ),
+              ),
+            );
+          }),
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          direction: Axis.horizontal,
+        );
+      },
     );
   }
 }
