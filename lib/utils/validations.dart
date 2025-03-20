@@ -20,6 +20,17 @@ abstract class Validations {
     r'[!@#\$%^&*()_+={}:;<>?/.\",\|\[\]\\`~]', // No special characters
   ];
 
+  static final List<String> generalNoNumbersDenyPatterns = [
+    r"^ ", // No space at the start
+    r"^[-'’]", // No hyphen/apostrophe at the start
+    r" {2,}", // No double spaces
+    r"--", // No double hyphens
+    r"''", // No double apostrophes
+    r'[!@#\$%^&*()_+={}:;<>?/.\",\|\[\]\\`~]', // No special characters
+    r"\d", // No numbers
+  ];
+
+
 
   // Birthday Validation: No future dates
   static String? validateBirthday(String? value) {

@@ -102,11 +102,28 @@ class _TextFieldSectionState extends State<TextFieldSection> {
       lastDate: DateTime.now(),
     );
     if (pickedBirthday != null) {
-      setState(() {
-        _selectedBirthday = pickedBirthday;
-        _birthdayController.text =
-            "${_selectedBirthday!.day}/${_selectedBirthday!.month}/${_selectedBirthday!.year}";
-      });
+      final DateTime today = DateTime.now();
+      final int age = today.year - pickedBirthday.year;
+      if (age < 16 ||
+          (age == 16 &&
+              today.isBefore(pickedBirthday.add(Duration(days: age * 365))))) {
+        setState(() {
+          _validateBirthday = true;
+          _birthdayController.text = "";
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+              content:
+                  Text("You must be at least 16 years old to use HoursTruly")),
+        );
+      } else {
+        setState(() {
+          _selectedBirthday = pickedBirthday;
+          _birthdayController.text =
+              "${_selectedBirthday!.day}/${_selectedBirthday!.month}/${_selectedBirthday!.year}";
+          _validateBirthday = false;
+        });
+      }
     }
   }
 
@@ -120,6 +137,9 @@ class _TextFieldSectionState extends State<TextFieldSection> {
     if (pickedStartDate != null) {
       setState(() {
         _selectedStartDate = pickedStartDate;
+        _startDateController.text =
+            "${_selectedStartDate!.day}/${_selectedStartDate!.month}/${_selectedStartDate!.year}";
+        _validateStartDate = false;
       });
     }
   }
@@ -135,6 +155,30 @@ class _TextFieldSectionState extends State<TextFieldSection> {
       _validatePosition = _positionController.text.isEmpty;
       _validateStartDate = _selectedStartDate == null;
       _validateHoursRequired = _hoursRequiredController.text.isEmpty;
+
+      // if tama na lahat ng fields, proceed to main page then clear all fields
+      if (!_validateName &&
+          !_validateBirthday &&
+          !_validateSchool &&
+          !_validateCompany &&
+          !_validatePosition &&
+          !_validateStartDate &&
+          !_validateHoursRequired) {
+        //go to main page
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => MyApp()),
+        );
+        //clear all fields
+        _selectedPronoun = "He/Him";
+        _nameController.clear();
+        _birthdayController.clear();
+        _schoolController.clear();
+        _companyController.clear();
+        _positionController.clear();
+        _startDateController.clear();
+        _hoursRequiredController.clear();
+      }
     });
   }
 
@@ -169,7 +213,6 @@ class _TextFieldSectionState extends State<TextFieldSection> {
                 decoration: InputDecoration(
                   labelText: "Pronouns",
                   border: OutlineInputBorder(),
-
                 ),
                 items: ["He/Him", "She/Her", "They/Them"].map((String value) {
                   return DropdownMenuItem<String>(
@@ -205,10 +248,14 @@ class _TextFieldSectionState extends State<TextFieldSection> {
                 ),
                 inputFormatters: <TextInputFormatter>[
                   LengthLimitingTextInputFormatter(50),
-                  ...Validations.strictDenyPatterns.map((pattern) => FilteringTextInputFormatter.deny(RegExp(pattern))), // Apply deny filters
+                  ...Validations.strictDenyPatterns.map((pattern) =>
+                      FilteringTextInputFormatter.deny(RegExp(pattern))),
+                  // Apply deny filters
                 ],
                 onChanged: (text) {
-                  setState(() {});
+                  setState(() {
+                    _validateName = false;
+                  });
                 },
               ),
             ),
@@ -237,7 +284,9 @@ class _TextFieldSectionState extends State<TextFieldSection> {
               errorText: _validateBirthday ? "Enter a valid Birthday" : null,
             ),
             onChanged: (text) {
-              setState(() {});
+              setState(() {
+                _validateBirthday = false;
+              });
             },
           ),
         ),
@@ -255,10 +304,14 @@ class _TextFieldSectionState extends State<TextFieldSection> {
             ),
             inputFormatters: <TextInputFormatter>[
               LengthLimitingTextInputFormatter(30),
-              ...Validations.generalDenyPatterns.map((pattern) => FilteringTextInputFormatter.deny(RegExp(pattern))), // Apply deny filters
+              ...Validations.generalNoNumbersDenyPatterns.map((pattern) =>
+                  FilteringTextInputFormatter.deny(RegExp(pattern))),
+              // Apply deny filters
             ],
             onChanged: (text) {
-              setState(() {});
+              setState(() {
+                _validateSchool = false;
+              });
             },
           ),
         ),
@@ -280,13 +333,19 @@ class _TextFieldSectionState extends State<TextFieldSection> {
             ),
             inputFormatters: <TextInputFormatter>[
               LengthLimitingTextInputFormatter(30),
-              ...Validations.generalDenyPatterns.map((pattern) => FilteringTextInputFormatter.deny(RegExp(pattern))), // Apply deny filters
+              ...Validations.generalDenyPatterns.map((pattern) =>
+                  FilteringTextInputFormatter.deny(RegExp(pattern))),
+              // Apply deny filters
             ],
             onChanged: (text) {
-              setState(() {});
+              setState(() {
+                _validateCompany = false;
+              });
             },
           ),
         ),
+
+        // Intern Position
         Padding(
           padding: EdgeInsets.only(top: 8),
           child: TextField(
@@ -299,13 +358,19 @@ class _TextFieldSectionState extends State<TextFieldSection> {
             ),
             inputFormatters: <TextInputFormatter>[
               LengthLimitingTextInputFormatter(30),
-              ...Validations.generalDenyPatterns.map((pattern) => FilteringTextInputFormatter.deny(RegExp(pattern))), // Apply deny filters
+              ...Validations.generalDenyPatterns.map((pattern) =>
+                  FilteringTextInputFormatter.deny(RegExp(pattern))),
+              // Apply deny filters
             ],
             onChanged: (text) {
-              setState(() {});
+              setState(() {
+                _validatePosition = false;
+              });
             },
           ),
         ),
+
+        // Start Date & Hours Required
         Padding(
           padding: EdgeInsets.only(top: 8),
           child: Row(
@@ -332,7 +397,9 @@ class _TextFieldSectionState extends State<TextFieldSection> {
                         _validateStartDate ? "Enter a valid start date" : null,
                   ),
                   onChanged: (text) {
-                    setState(() {});
+                    setState(() {
+                      _validateStartDate = false;
+                    });
                   },
                 ),
               ),
@@ -355,13 +422,29 @@ class _TextFieldSectionState extends State<TextFieldSection> {
                     FilteringTextInputFormatter.digitsOnly
                   ],
                   onChanged: (text) {
-                    setState(() {});
+                    // so it doesn't accept 0, 00, or 01 as inputs
+                    if (text == "0" ||
+                        text == "00" ||
+                        (text.startsWith('0') && text.length > 1)) {
+                      _hoursRequiredController.clear();
+                      setState(() {
+                        _validateHoursRequired = true;
+                      });
+                    } else {
+                      setState(() {
+                        _validateHoursRequired = false;
+                      });
+                    }
                   },
                 ),
               ),
             ],
           ),
         ),
+
+        SizedBox(height: 60),
+
+        // Button
         Padding(
           padding: EdgeInsets.only(top: 16),
           child: Row(
