@@ -6,6 +6,17 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:intern_flutter/pages/weekly_tasks_page.dart';
 import 'package:gif/gif.dart';
 import 'package:intern_flutter/pages/onboarding_page.dart';
+import 'package:flutter/services.dart';
+
+//controllers
+final TextEditingController _startDateController = TextEditingController();
+final TextEditingController _endDateController = TextEditingController();
+final TextEditingController _wprNumController = TextEditingController();
+
+//validations
+bool _validateStartDate = false;
+bool _validateEndDate = false;
+bool _validateWprNum = false;
 
 void main() {
   runApp(const MyApp());
@@ -402,21 +413,20 @@ class _AddWPRState extends State<AddWPR> {
   DateTime? _selectedStartDate;
   DateTime? _selectedEndDate;
 
-  TextEditingController _startDateController = TextEditingController();
-  TextEditingController _endDateController = TextEditingController();
-
   void _pickStartDate(BuildContext context) async {
     DateTime? pickedStartDate = await showDatePicker(
       context: context,
       initialDate: _selectedStartDate ?? DateTime.now(),
-      firstDate: DateTime(1900),
-      lastDate: DateTime.now(),
+      firstDate: DateTime.now(),
+      lastDate: DateTime(2100),
     );
     if (pickedStartDate != null) {
       setState(() {
         _selectedStartDate = pickedStartDate;
         _startDateController.text =
-        "${pickedStartDate.day}/${pickedStartDate.month}/${pickedStartDate.year}"; // Update the TextField value
+        "${pickedStartDate.day}/${pickedStartDate.month}/${pickedStartDate.year}";
+
+        _validateStartDate = false; //clear error if valid date is selected
       });
     }
   }
@@ -425,16 +435,42 @@ class _AddWPRState extends State<AddWPR> {
     DateTime? pickedEndDate = await showDatePicker(
       context: context,
       initialDate: _selectedEndDate ?? DateTime.now(),
-      firstDate: DateTime(1900),
-      lastDate: DateTime.now(),
+      firstDate: DateTime.now(),
+      lastDate: DateTime(2100),
     );
     if (pickedEndDate != null) {
       setState(() {
         _selectedEndDate = pickedEndDate;
         _endDateController.text =
         "${pickedEndDate.day}/${pickedEndDate.month}/${pickedEndDate.year}";
+
+        _validateEndDate = false; //clear error if valid date is selected
       });
     }
+  }
+
+  //validations
+  void validateWprFields() {
+    // setState(() {
+    //   // _validateStartDate = _startDateController.text.isEmpty;
+    //   _validateStartDate = _selectedStartDate == null;
+    //   // _validateEndDate = _endDateController.text.isEmpty;
+    //   _validateEndDate = _selectedStartDate == null;
+    //   _validateWprNum = _wprNumController.text.isEmpty;
+    // });
+
+    //ginanto ko kasi may scenario na nawawala yung error checking/warning sa EndDate pag sinave ko kahit StartDate lng may laman
+    setState(() {
+      if (_wprNumController.text.isEmpty) {
+        _validateWprNum = true;
+      }
+      if (_selectedStartDate == null) {
+        _validateStartDate = true;
+      }
+      if (_selectedEndDate == null) {
+        _validateEndDate = true;
+      }
+    });
   }
 
   @override
@@ -445,12 +481,34 @@ class _AddWPRState extends State<AddWPR> {
         mainAxisSize: MainAxisSize.min,
         children: [
           TextField(
+            controller: _wprNumController,
+            keyboardType: TextInputType.number,
             decoration: InputDecoration(
               labelText: "WPR #",
               border: OutlineInputBorder(),
+              errorText: _validateWprNum ? "Enter a valid number" : null,
             ),
+            inputFormatters: <TextInputFormatter>[
+              LengthLimitingTextInputFormatter(2),
+              FilteringTextInputFormatter.digitsOnly,
+            ],
+            onChanged: (text) {
+              // so it doesn't accept 0, 00, or 01 as inputs
+              if (text == "0" || text == "00" || (text.startsWith('0') && text.length > 1)) {
+                _wprNumController.clear();
+                setState(() {
+                  _validateWprNum = true;
+                });
+              } else {
+                setState(() {
+                  _validateWprNum = false;
+                });
+              }
+            },
           ),
           SizedBox(height: 12),
+
+          // Start Date
           TextField(
             controller: _startDateController,
             readOnly: true,
@@ -460,13 +518,21 @@ class _AddWPRState extends State<AddWPR> {
                   ? "${_selectedStartDate!.day}/${_selectedStartDate!.month}/${_selectedStartDate!.year}"
                   : "dd/mm/yyyy",
               border: OutlineInputBorder(),
+              floatingLabelBehavior: _selectedStartDate != null
+                  ? FloatingLabelBehavior.always
+                  : FloatingLabelBehavior.auto,
               suffixIcon: IconButton(
                 icon: Icon(Icons.calendar_month),
                 onPressed: () => _pickStartDate(context),
               ),
+              errorText: _validateStartDate ? "Enter a valid start date" : null,
             ),
+            onChanged: (text) {
+              setState(() {});
+            },
           ),
           SizedBox(height: 12),
+
           // End Date
           TextField(
             controller: _endDateController,
@@ -477,28 +543,46 @@ class _AddWPRState extends State<AddWPR> {
                   ? "${_selectedEndDate!.day}/${_selectedEndDate!.month}/${_selectedEndDate!.year}"
                   : "dd/mm/yyyy",
               border: OutlineInputBorder(),
+              floatingLabelBehavior: _selectedStartDate != null
+                  ? FloatingLabelBehavior.always
+                  : FloatingLabelBehavior.auto,
               suffixIcon: IconButton(
                 icon: Icon(Icons.calendar_month),
                 onPressed: () => _pickEndDate(context),
               ),
+              errorText: _validateEndDate ? "Enter a valid end date" : null,
             ),
+            onChanged: (text) {
+              setState(() {});
+            },
           ),
         ],
       ),
       actions: [
         TextButton(
-          onPressed: () => Navigator.pop(context),
+          onPressed: () {
+            _wprNumController.clear(); // Clear input fields
+            _startDateController.clear();
+            _endDateController.clear();
+
+            Navigator.pop(context);
+          },
           child: Text("Cancel"),
         ),
         ElevatedButton(
           onPressed: () {
-            Navigator.pop(context);
+            setState(() {
+              validateWprFields();
+
+              if (!_validateStartDate && !_validateEndDate) {
+                validateWprFields();
+              }
+            });
           },
           style: FilledButton.styleFrom(
             backgroundColor: Theme.of(context).colorScheme.inversePrimary,
           ),
           child: Text("Save",
-            //wala pang logic
             style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.bold,

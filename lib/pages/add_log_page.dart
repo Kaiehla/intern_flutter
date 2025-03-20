@@ -202,7 +202,17 @@ class _TextFieldSectionState extends State<TextFieldSection> {
               FilteringTextInputFormatter.digitsOnly, // Allow only numbers
             ],
             onChanged: (text) {
-              setState(() {});
+              // so it doesn't accept 0, 00, or 01 as inputs
+              if (text == "0" || text == "00" || (text.startsWith('0') && text.length > 1)) {
+                _hoursController.clear();
+                setState(() {
+                  _validateHours = true;
+                });
+              } else {
+                setState(() {
+                  _validateHours = false;
+                });
+              }
             },
           ),
         ),
