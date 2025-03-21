@@ -3,6 +3,9 @@ import 'package:flutter/services.dart';
 import 'package:intern_flutter/main.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:gif/gif.dart';
+import 'package:intern_flutter/models/internModel.dart';
+import 'package:intern_flutter/pages/profile_page.dart';
+import 'package:intern_flutter/utils/shared_preferences_service.dart';
 import 'package:intern_flutter/utils/validations.dart';
 
 // Controllers para makuha yung value ng textfields
@@ -14,6 +17,7 @@ final TextEditingController _companyController = TextEditingController();
 final TextEditingController _positionController = TextEditingController();
 final TextEditingController _startDateController = TextEditingController();
 final TextEditingController _hoursRequiredController = TextEditingController();
+final shared_preferences_service prefsService = shared_preferences_service();
 
 // Validation states para sa textfields
 String? _selectedPronoun = "He/Him";
@@ -59,7 +63,7 @@ class register_page extends StatelessWidget {
                 constraints: BoxConstraints(minHeight: constraints.maxHeight),
                 child: Padding(
                   padding:
-                      const EdgeInsets.only(left: 16, right: 16, bottom: 16),
+                  const EdgeInsets.only(left: 16, right: 16, bottom: 16),
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -114,13 +118,14 @@ class _TextFieldSectionState extends State<TextFieldSection> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
               content:
-                  Text("You must be at least 16 years old to use HoursTruly")),
+              Text("You must be at least 16 years old to use HoursTruly")),
         );
       } else {
         setState(() {
           _selectedBirthday = pickedBirthday;
           _birthdayController.text =
-              "${_selectedBirthday!.day}/${_selectedBirthday!.month}/${_selectedBirthday!.year}";
+          "${_selectedBirthday!.day}/${_selectedBirthday!
+              .month}/${_selectedBirthday!.year}";
           _validateBirthday = false;
         });
       }
@@ -138,7 +143,8 @@ class _TextFieldSectionState extends State<TextFieldSection> {
       setState(() {
         _selectedStartDate = pickedStartDate;
         _startDateController.text =
-            "${_selectedStartDate!.day}/${_selectedStartDate!.month}/${_selectedStartDate!.year}";
+        "${_selectedStartDate!.day}/${_selectedStartDate!
+            .month}/${_selectedStartDate!.year}";
         _validateStartDate = false;
       });
     }
@@ -164,10 +170,21 @@ class _TextFieldSectionState extends State<TextFieldSection> {
           !_validatePosition &&
           !_validateStartDate &&
           !_validateHoursRequired) {
+        // save to model and sharedprefs
+        internModel newIntern = internModel(
+            pronouns: _selectedPronoun!,
+            name: _nameController.text,
+            birthday: _selectedBirthday!,
+            school: _schoolController.text,
+            company: _companyController.text,
+            position: _positionController.text,
+            startDate: _selectedStartDate!,
+            hoursRequired: int.parse(_hoursRequiredController.text));
+        // prefsService.saveIntern(newIntern);
         //go to main page
         Navigator.push(
           context,
-          MaterialPageRoute(builder: (context) => MyApp()),
+          MaterialPageRoute(builder: (context) => profile_page(internData: newIntern)),
         );
         //clear all fields
         _selectedPronoun = "He/Him";
@@ -271,7 +288,8 @@ class _TextFieldSectionState extends State<TextFieldSection> {
             decoration: InputDecoration(
               labelText: "Birthday",
               hintText: _selectedBirthday != null
-                  ? "${_selectedBirthday!.day}/${_selectedBirthday!.month}/${_selectedBirthday!.year}"
+                  ? "${_selectedBirthday!.day}/${_selectedBirthday!
+                  .month}/${_selectedBirthday!.year}"
                   : "dd/mm/yyyy",
               border: OutlineInputBorder(),
               floatingLabelBehavior: _selectedBirthday != null
@@ -316,7 +334,10 @@ class _TextFieldSectionState extends State<TextFieldSection> {
           ),
         ),
         Divider(
-          color: Theme.of(context).colorScheme.outlineVariant,
+          color: Theme
+              .of(context)
+              .colorScheme
+              .outlineVariant,
           thickness: 1,
         ),
 
@@ -383,7 +404,8 @@ class _TextFieldSectionState extends State<TextFieldSection> {
                   decoration: InputDecoration(
                     labelText: "Start Date",
                     hintText: _selectedStartDate != null
-                        ? "${_selectedStartDate!.day}/${_selectedStartDate!.month}/${_selectedStartDate!.year}"
+                        ? "${_selectedStartDate!.day}/${_selectedStartDate!
+                        .month}/${_selectedStartDate!.year}"
                         : "dd/mm/yyyy",
                     border: OutlineInputBorder(),
                     floatingLabelBehavior: _selectedStartDate != null
@@ -394,7 +416,7 @@ class _TextFieldSectionState extends State<TextFieldSection> {
                       onPressed: () => _pickStartDate(context),
                     ),
                     errorText:
-                        _validateStartDate ? "Enter a valid start date" : null,
+                    _validateStartDate ? "Enter a valid start date" : null,
                   ),
                   onChanged: (text) {
                     setState(() {
@@ -458,7 +480,10 @@ class _TextFieldSectionState extends State<TextFieldSection> {
                   },
                   style: FilledButton.styleFrom(
                     backgroundColor:
-                        Theme.of(context).colorScheme.inversePrimary,
+                    Theme
+                        .of(context)
+                        .colorScheme
+                        .inversePrimary,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                       side: BorderSide(color: Colors.black, width: 2),
@@ -471,7 +496,10 @@ class _TextFieldSectionState extends State<TextFieldSection> {
                       style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.bold,
-                        color: Theme.of(context).colorScheme.onPrimaryContainer,
+                        color: Theme
+                            .of(context)
+                            .colorScheme
+                            .onPrimaryContainer,
                       ),
                     ),
                   ),
@@ -517,7 +545,7 @@ class InternIDCard extends StatelessWidget {
   // Text Styles for ID Card Details - para isahan lang, class ang peg tatawagin mo nolong
   static const TextStyle idInputStyle = TextStyle(fontSize: 11);
   static const TextStyle idLabelStyle =
-      TextStyle(fontSize: 10, fontWeight: FontWeight.bold);
+  TextStyle(fontSize: 10, fontWeight: FontWeight.bold);
 
   // Constructor - para maaccess yung mga values ng textfields sa taas
   const InternIDCard({
@@ -540,7 +568,7 @@ class InternIDCard extends StatelessWidget {
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: SizedBox(
-            // double infinity para magexpand yung card sa buong screen width responsive ganern
+          // double infinity para magexpand yung card sa buong screen width responsive ganern
             width: double.infinity,
             child: Column(
               children: [
@@ -555,7 +583,9 @@ class InternIDCard extends StatelessWidget {
                         style: TextStyle(
                           fontSize: 26,
                           fontStyle: FontStyle.italic,
-                          fontFamily: GoogleFonts.instrumentSerif().fontFamily,
+                          fontFamily: GoogleFonts
+                              .instrumentSerif()
+                              .fontFamily,
                         ),
                       ),
                     ),
@@ -585,7 +615,7 @@ class InternIDCard extends StatelessWidget {
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child:
-                            Icon(Icons.person, size: 40, color: Colors.white),
+                        Icon(Icons.person, size: 40, color: Colors.white),
                       ),
                     ),
 
