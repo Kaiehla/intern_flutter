@@ -7,6 +7,8 @@ import 'package:intern_flutter/pages/weekly_tasks_page.dart';
 import 'package:gif/gif.dart';
 import 'package:intern_flutter/pages/onboarding_page.dart';
 import 'package:flutter/services.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:intern_flutter/firebase_options.dart';
 
 //controllers
 final TextEditingController _startDateController = TextEditingController();
@@ -18,9 +20,12 @@ bool _validateStartDate = false;
 bool _validateEndDate = false;
 bool _validateWprNum = false;
 
-void main() {
-  runApp(const MyApp());
-  // runApp(const register_page());
+void main() async {
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
+  // runApp(const MyApp());
+  runApp(const register_page());
 }
 
 class MyApp extends StatelessWidget {

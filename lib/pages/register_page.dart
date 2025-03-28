@@ -7,6 +7,9 @@ import 'package:intern_flutter/models/internModel.dart';
 import 'package:intern_flutter/pages/profile_page.dart';
 import 'package:intern_flutter/utils/shared_preferences_service.dart';
 import 'package:intern_flutter/utils/validations.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:intern_flutter/firebase_options.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 // Controllers para makuha yung value ng textfields
 final TextEditingController _pronounsController = TextEditingController();
@@ -63,7 +66,7 @@ class register_page extends StatelessWidget {
                 constraints: BoxConstraints(minHeight: constraints.maxHeight),
                 child: Padding(
                   padding:
-                  const EdgeInsets.only(left: 16, right: 16, bottom: 16),
+                      const EdgeInsets.only(left: 16, right: 16, bottom: 16),
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -118,14 +121,13 @@ class _TextFieldSectionState extends State<TextFieldSection> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
               content:
-              Text("You must be at least 16 years old to use HoursTruly")),
+                  Text("You must be at least 16 years old to use HoursTruly")),
         );
       } else {
         setState(() {
           _selectedBirthday = pickedBirthday;
           _birthdayController.text =
-          "${_selectedBirthday!.day}/${_selectedBirthday!
-              .month}/${_selectedBirthday!.year}";
+              "${_selectedBirthday!.day}/${_selectedBirthday!.month}/${_selectedBirthday!.year}";
           _validateBirthday = false;
         });
       }
@@ -143,12 +145,14 @@ class _TextFieldSectionState extends State<TextFieldSection> {
       setState(() {
         _selectedStartDate = pickedStartDate;
         _startDateController.text =
-        "${_selectedStartDate!.day}/${_selectedStartDate!
-            .month}/${_selectedStartDate!.year}";
+            "${_selectedStartDate!.day}/${_selectedStartDate!.month}/${_selectedStartDate!.year}";
         _validateStartDate = false;
       });
     }
   }
+
+  // implement a list of user model
+  List<internModel> internList = [];
 
   // validations
   void validateIDFields() {
@@ -182,20 +186,133 @@ class _TextFieldSectionState extends State<TextFieldSection> {
             hoursRequired: int.parse(_hoursRequiredController.text));
         // prefsService.saveIntern(newIntern);
         //go to main page
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => profile_page(internData: newIntern)),
-        );
+        // Navigator.push(
+        //   context,
+        //   MaterialPageRoute(builder: (context) => profile_page(internData: newIntern)),
+        // );
+        // add to list
+        internList.add(newIntern);
+        // add to firebase database
+       FirebaseFirestore.instance.collection('interns').add({
+         'pronouns': newIntern.pronouns,
+         'name': newIntern.name,
+         'birthday': newIntern.birthday,
+         'school': newIntern.school,
+         'company': newIntern.company,
+         'position': newIntern.position,
+         'startDate': newIntern.startDate,
+         'hoursRequired': newIntern.hoursRequired,
+       }).then((DocumentReference doc) {
+         print('DocumentSnapshot added with ID: ${doc.id}');
+       }).catchError((error) {
+         print('Error adding document: $error');
+       });
+
         //clear all fields
         _selectedPronoun = "He/Him";
         _nameController.clear();
+        _selectedBirthday = null;
         _birthdayController.clear();
         _schoolController.clear();
         _companyController.clear();
         _positionController.clear();
+        _selectedStartDate = null;
         _startDateController.clear();
         _hoursRequiredController.clear();
       }
+    });
+  }
+
+  // update function - dito sa example na to need muna ilagay yung name as an indentification para malaman kung anong data yung iuupdate
+  int searchIndex(String name) {
+    return internList.indexWhere((element) => element.name == name);
+  }
+
+  void updateUser() {
+    _selectedPronoun == null;
+    _validateName = _nameController.text.isEmpty;
+    _validateBirthday = _birthdayController.text.isEmpty;
+    _validateSchool = _schoolController.text.isEmpty;
+    _validateCompany = _companyController.text.isEmpty;
+    _validatePosition = _positionController.text.isEmpty;
+    _validateStartDate = _selectedStartDate == null;
+    _validateHoursRequired = _hoursRequiredController.text.isEmpty;
+
+    if (!_validateName &&
+        !_validateBirthday &&
+        !_validateSchool &&
+        !_validateCompany &&
+        !_validatePosition &&
+        !_validateStartDate &&
+        !_validateHoursRequired) {
+      // update function
+      //update to firebase database by id and name
+      FirebaseFirestore.instance
+          .collection('interns')
+          .where('name', isEqualTo: _nameController.text)
+          .get()
+          .then((QuerySnapshot querySnapshot) {
+        querySnapshot.docs.forEach((doc) {
+          FirebaseFirestore.instance
+              .collection('interns')
+              .doc(doc.id)
+              .update({
+            'pronouns': _selectedPronoun!,
+            'birthday': _selectedBirthday!,
+            'school': _schoolController.text,
+            'company': _companyController.text,
+            'position': _positionController.text,
+            'startDate': _selectedStartDate!,
+            'hoursRequired': int.parse(_hoursRequiredController.text),
+          }).then((value) {
+            print("User Updated");
+          }).catchError((error) {
+            print("Failed to update user: $error");
+          });
+        });
+      });
+
+      int searchedIndex = searchIndex(_nameController.text);
+      // check if name exists
+      if (searchedIndex != -1) {
+        setState(() {
+          internList[searchedIndex].pronouns = _selectedPronoun!;
+          internList[searchedIndex].birthday = _selectedBirthday!;
+          internList[searchedIndex].school = _schoolController.text;
+          internList[searchedIndex].company = _companyController.text;
+          internList[searchedIndex].position = _positionController.text;
+          internList[searchedIndex].startDate = _selectedStartDate!;
+          internList[searchedIndex].hoursRequired =
+              int.parse(_hoursRequiredController.text);
+        });
+
+
+      }
+    }
+  }
+
+  // delete function
+  void deleteUser() {
+    // int searchedIndex = searchIndex(_nameController.text);
+    // internList.removeAt(searchedIndex);
+
+    //delete to firebase database by name
+    FirebaseFirestore.instance
+        .collection('interns')
+        .where('name', isEqualTo: _nameController.text)
+        .get()
+        .then((QuerySnapshot querySnapshot) {
+      querySnapshot.docs.forEach((doc) {
+        FirebaseFirestore.instance
+            .collection('interns')
+            .doc(doc.id)
+            .delete()
+            .then((value) {
+          print("User Deleted");
+        }).catchError((error) {
+          print("Failed to delete user: $error");
+        });
+      });
     });
   }
 
@@ -288,8 +405,7 @@ class _TextFieldSectionState extends State<TextFieldSection> {
             decoration: InputDecoration(
               labelText: "Birthday",
               hintText: _selectedBirthday != null
-                  ? "${_selectedBirthday!.day}/${_selectedBirthday!
-                  .month}/${_selectedBirthday!.year}"
+                  ? "${_selectedBirthday!.day}/${_selectedBirthday!.month}/${_selectedBirthday!.year}"
                   : "dd/mm/yyyy",
               border: OutlineInputBorder(),
               floatingLabelBehavior: _selectedBirthday != null
@@ -334,10 +450,7 @@ class _TextFieldSectionState extends State<TextFieldSection> {
           ),
         ),
         Divider(
-          color: Theme
-              .of(context)
-              .colorScheme
-              .outlineVariant,
+          color: Theme.of(context).colorScheme.outlineVariant,
           thickness: 1,
         ),
 
@@ -404,8 +517,7 @@ class _TextFieldSectionState extends State<TextFieldSection> {
                   decoration: InputDecoration(
                     labelText: "Start Date",
                     hintText: _selectedStartDate != null
-                        ? "${_selectedStartDate!.day}/${_selectedStartDate!
-                        .month}/${_selectedStartDate!.year}"
+                        ? "${_selectedStartDate!.day}/${_selectedStartDate!.month}/${_selectedStartDate!.year}"
                         : "dd/mm/yyyy",
                     border: OutlineInputBorder(),
                     floatingLabelBehavior: _selectedStartDate != null
@@ -416,7 +528,7 @@ class _TextFieldSectionState extends State<TextFieldSection> {
                       onPressed: () => _pickStartDate(context),
                     ),
                     errorText:
-                    _validateStartDate ? "Enter a valid start date" : null,
+                        _validateStartDate ? "Enter a valid start date" : null,
                   ),
                   onChanged: (text) {
                     setState(() {
@@ -463,8 +575,32 @@ class _TextFieldSectionState extends State<TextFieldSection> {
             ],
           ),
         ),
+        Padding(
+            padding: EdgeInsets.only(top: 10),
+            child: ListView.builder(
+              shrinkWrap: true,
+              itemCount: internList.length,
+              itemBuilder: (context, index) {
+                return ListTile(
+                  title: Text(
+                      '${internList[index].name} (${internList[index].pronouns})',
+                      style: TextStyle(fontWeight: FontWeight.bold)),
+                  subtitle: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(internList[index].birthday.toLocal().toString()),
+                      Text(internList[index].school),
+                      Text(internList[index].company),
+                      Text(internList[index].position),
+                      Text(internList[index].startDate.toLocal().toString()),
+                      Text(internList[index].hoursRequired.toString()),
+                    ],
+                  ),
+                );
+              },
+            )),
 
-        SizedBox(height: 60),
+        SizedBox(height: 16),
 
         // Button
         Padding(
@@ -473,17 +609,15 @@ class _TextFieldSectionState extends State<TextFieldSection> {
             children: [
               Expanded(
                 child: FilledButton(
-                  onPressed: () {
+                  onPressed: internList.isNotEmpty ? null : () {
                     setState(() {
                       validateIDFields();
                     });
                   },
                   style: FilledButton.styleFrom(
-                    backgroundColor:
-                    Theme
-                        .of(context)
-                        .colorScheme
-                        .inversePrimary,
+                    backgroundColor: internList.isNotEmpty
+                        ? Colors.grey
+                        : Theme.of(context).colorScheme.inversePrimary,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                       side: BorderSide(color: Colors.black, width: 2),
@@ -496,10 +630,65 @@ class _TextFieldSectionState extends State<TextFieldSection> {
                       style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.bold,
-                        color: Theme
-                            .of(context)
-                            .colorScheme
-                            .onPrimaryContainer,
+                        color: internList.isNotEmpty
+                            ? Colors.black38
+                            : Theme.of(context).colorScheme.onPrimaryContainer,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              Expanded(
+                child: FilledButton(
+                  onPressed: () {
+                    setState(() {
+                      updateUser();
+                    });
+                  },
+                  style: FilledButton.styleFrom(
+                    backgroundColor:
+                        Theme.of(context).colorScheme.inversePrimary,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      side: BorderSide(color: Colors.black, width: 2),
+                    ),
+                  ),
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(vertical: 12),
+                    child: Text(
+                      "Update",
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                        color: Theme.of(context).colorScheme.onPrimaryContainer,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              Expanded(
+                child: FilledButton(
+                  onPressed: () {
+                    setState(() {
+                      deleteUser();
+                    });
+                  },
+                  style: FilledButton.styleFrom(
+                    backgroundColor:
+                        Theme.of(context).colorScheme.inversePrimary,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      side: BorderSide(color: Colors.black, width: 2),
+                    ),
+                  ),
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(vertical: 12),
+                    child: Text(
+                      "Delete",
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                        color: Theme.of(context).colorScheme.onPrimaryContainer,
                       ),
                     ),
                   ),
@@ -545,7 +734,7 @@ class InternIDCard extends StatelessWidget {
   // Text Styles for ID Card Details - para isahan lang, class ang peg tatawagin mo nolong
   static const TextStyle idInputStyle = TextStyle(fontSize: 11);
   static const TextStyle idLabelStyle =
-  TextStyle(fontSize: 10, fontWeight: FontWeight.bold);
+      TextStyle(fontSize: 10, fontWeight: FontWeight.bold);
 
   // Constructor - para maaccess yung mga values ng textfields sa taas
   const InternIDCard({
@@ -568,7 +757,7 @@ class InternIDCard extends StatelessWidget {
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: SizedBox(
-          // double infinity para magexpand yung card sa buong screen width responsive ganern
+            // double infinity para magexpand yung card sa buong screen width responsive ganern
             width: double.infinity,
             child: Column(
               children: [
@@ -583,9 +772,7 @@ class InternIDCard extends StatelessWidget {
                         style: TextStyle(
                           fontSize: 26,
                           fontStyle: FontStyle.italic,
-                          fontFamily: GoogleFonts
-                              .instrumentSerif()
-                              .fontFamily,
+                          fontFamily: GoogleFonts.instrumentSerif().fontFamily,
                         ),
                       ),
                     ),
@@ -615,7 +802,7 @@ class InternIDCard extends StatelessWidget {
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child:
-                        Icon(Icons.person, size: 40, color: Colors.white),
+                            Icon(Icons.person, size: 40, color: Colors.white),
                       ),
                     ),
 
