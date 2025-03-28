@@ -3,7 +3,13 @@ import 'package:flutter/services.dart';
 import 'package:intern_flutter/main.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:gif/gif.dart';
+import 'package:intern_flutter/models/internModel.dart';
+import 'package:intern_flutter/pages/profile_page.dart';
+import 'package:intern_flutter/utils/shared_preferences_service.dart';
 import 'package:intern_flutter/utils/validations.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:intern_flutter/firebase_options.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 // Controllers para makuha yung value ng textfields
 final TextEditingController _pronounsController = TextEditingController();
@@ -14,6 +20,7 @@ final TextEditingController _companyController = TextEditingController();
 final TextEditingController _positionController = TextEditingController();
 final TextEditingController _startDateController = TextEditingController();
 final TextEditingController _hoursRequiredController = TextEditingController();
+final shared_preferences_service prefsService = shared_preferences_service();
 
 // Validation states para sa textfields
 String? _selectedPronoun = "He/Him";
@@ -144,6 +151,9 @@ class _TextFieldSectionState extends State<TextFieldSection> {
     }
   }
 
+  // implement a list of user model
+  List<internModel> internList = [];
+
   // validations
   void validateIDFields() {
     setState(() {
@@ -164,21 +174,145 @@ class _TextFieldSectionState extends State<TextFieldSection> {
           !_validatePosition &&
           !_validateStartDate &&
           !_validateHoursRequired) {
+        // save to model and sharedprefs
+        internModel newIntern = internModel(
+            pronouns: _selectedPronoun!,
+            name: _nameController.text,
+            birthday: _selectedBirthday!,
+            school: _schoolController.text,
+            company: _companyController.text,
+            position: _positionController.text,
+            startDate: _selectedStartDate!,
+            hoursRequired: int.parse(_hoursRequiredController.text));
+        // prefsService.saveIntern(newIntern);
         //go to main page
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => MyApp()),
-        );
+        // Navigator.push(
+        //   context,
+        //   MaterialPageRoute(builder: (context) => profile_page(internData: newIntern)),
+        // );
+        // add to list
+        internList.add(newIntern);
+        // add to firebase database
+       FirebaseFirestore.instance.collection('interns').add({
+         'pronouns': newIntern.pronouns,
+         'name': newIntern.name,
+         'birthday': newIntern.birthday,
+         'school': newIntern.school,
+         'company': newIntern.company,
+         'position': newIntern.position,
+         'startDate': newIntern.startDate,
+         'hoursRequired': newIntern.hoursRequired,
+       }).then((DocumentReference doc) {
+         print('DocumentSnapshot added with ID: ${doc.id}');
+       }).catchError((error) {
+         print('Error adding document: $error');
+       });
+
         //clear all fields
         _selectedPronoun = "He/Him";
         _nameController.clear();
+        _selectedBirthday = null;
         _birthdayController.clear();
         _schoolController.clear();
         _companyController.clear();
         _positionController.clear();
+        _selectedStartDate = null;
         _startDateController.clear();
         _hoursRequiredController.clear();
       }
+    });
+  }
+
+  // update function - dito sa example na to need muna ilagay yung name as an indentification para malaman kung anong data yung iuupdate
+  int searchIndex(String name) {
+    return internList.indexWhere((element) => element.name == name);
+  }
+
+  void updateUser() {
+    _selectedPronoun == null;
+    _validateName = _nameController.text.isEmpty;
+    _validateBirthday = _birthdayController.text.isEmpty;
+    _validateSchool = _schoolController.text.isEmpty;
+    _validateCompany = _companyController.text.isEmpty;
+    _validatePosition = _positionController.text.isEmpty;
+    _validateStartDate = _selectedStartDate == null;
+    _validateHoursRequired = _hoursRequiredController.text.isEmpty;
+
+    if (!_validateName &&
+        !_validateBirthday &&
+        !_validateSchool &&
+        !_validateCompany &&
+        !_validatePosition &&
+        !_validateStartDate &&
+        !_validateHoursRequired) {
+      // update function
+      //update to firebase database by id and name
+      FirebaseFirestore.instance
+          .collection('interns')
+          .where('name', isEqualTo: _nameController.text)
+          .get()
+          .then((QuerySnapshot querySnapshot) {
+        querySnapshot.docs.forEach((doc) {
+          FirebaseFirestore.instance
+              .collection('interns')
+              .doc(doc.id)
+              .update({
+            'pronouns': _selectedPronoun!,
+            'birthday': _selectedBirthday!,
+            'school': _schoolController.text,
+            'company': _companyController.text,
+            'position': _positionController.text,
+            'startDate': _selectedStartDate!,
+            'hoursRequired': int.parse(_hoursRequiredController.text),
+          }).then((value) {
+            print("User Updated");
+          }).catchError((error) {
+            print("Failed to update user: $error");
+          });
+        });
+      });
+
+      int searchedIndex = searchIndex(_nameController.text);
+      // check if name exists
+      if (searchedIndex != -1) {
+        setState(() {
+          internList[searchedIndex].pronouns = _selectedPronoun!;
+          internList[searchedIndex].birthday = _selectedBirthday!;
+          internList[searchedIndex].school = _schoolController.text;
+          internList[searchedIndex].company = _companyController.text;
+          internList[searchedIndex].position = _positionController.text;
+          internList[searchedIndex].startDate = _selectedStartDate!;
+          internList[searchedIndex].hoursRequired =
+              int.parse(_hoursRequiredController.text);
+        });
+
+
+      }
+    }
+  }
+
+  // delete function
+  void deleteUser() {
+    // int searchedIndex = searchIndex(_nameController.text);
+    // internList.removeAt(searchedIndex);
+
+    //delete to firebase database by name
+    FirebaseFirestore.instance
+        .collection('interns')
+        .where('name', isEqualTo: _nameController.text)
+        .get()
+        .then((QuerySnapshot querySnapshot) {
+      querySnapshot.docs.forEach((doc) {
+        FirebaseFirestore.instance
+            .collection('interns')
+            .doc(doc.id)
+            .delete()
+            .then((value) {
+          print("User Deleted");
+        }).catchError((error) {
+          print("Failed to delete user: $error");
+        });
+      });
     });
   }
 
@@ -441,8 +575,32 @@ class _TextFieldSectionState extends State<TextFieldSection> {
             ],
           ),
         ),
+        Padding(
+            padding: EdgeInsets.only(top: 10),
+            child: ListView.builder(
+              shrinkWrap: true,
+              itemCount: internList.length,
+              itemBuilder: (context, index) {
+                return ListTile(
+                  title: Text(
+                      '${internList[index].name} (${internList[index].pronouns})',
+                      style: TextStyle(fontWeight: FontWeight.bold)),
+                  subtitle: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(internList[index].birthday.toLocal().toString()),
+                      Text(internList[index].school),
+                      Text(internList[index].company),
+                      Text(internList[index].position),
+                      Text(internList[index].startDate.toLocal().toString()),
+                      Text(internList[index].hoursRequired.toString()),
+                    ],
+                  ),
+                );
+              },
+            )),
 
-        SizedBox(height: 60),
+        SizedBox(height: 16),
 
         // Button
         Padding(
@@ -451,9 +609,40 @@ class _TextFieldSectionState extends State<TextFieldSection> {
             children: [
               Expanded(
                 child: FilledButton(
-                  onPressed: () {
+                  onPressed: internList.isNotEmpty ? null : () {
                     setState(() {
                       validateIDFields();
+                    });
+                  },
+                  style: FilledButton.styleFrom(
+                    backgroundColor: internList.isNotEmpty
+                        ? Colors.grey
+                        : Theme.of(context).colorScheme.inversePrimary,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      side: BorderSide(color: Colors.black, width: 2),
+                    ),
+                  ),
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(vertical: 12),
+                    child: Text(
+                      "Save",
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                        color: internList.isNotEmpty
+                            ? Colors.black38
+                            : Theme.of(context).colorScheme.onPrimaryContainer,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              Expanded(
+                child: FilledButton(
+                  onPressed: () {
+                    setState(() {
+                      updateUser();
                     });
                   },
                   style: FilledButton.styleFrom(
@@ -467,7 +656,35 @@ class _TextFieldSectionState extends State<TextFieldSection> {
                   child: Padding(
                     padding: EdgeInsets.symmetric(vertical: 12),
                     child: Text(
-                      "Save",
+                      "Update",
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                        color: Theme.of(context).colorScheme.onPrimaryContainer,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              Expanded(
+                child: FilledButton(
+                  onPressed: () {
+                    setState(() {
+                      deleteUser();
+                    });
+                  },
+                  style: FilledButton.styleFrom(
+                    backgroundColor:
+                        Theme.of(context).colorScheme.inversePrimary,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      side: BorderSide(color: Colors.black, width: 2),
+                    ),
+                  ),
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(vertical: 12),
+                    child: Text(
+                      "Delete",
                       style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.bold,

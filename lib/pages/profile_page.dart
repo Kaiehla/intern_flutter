@@ -1,15 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:intern_flutter/main.dart';
+import 'package:intern_flutter/models/internModel.dart';
 import 'package:intern_flutter/pages/register_page.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:gif/gif.dart';
 
 class profile_page extends StatelessWidget {
-  const profile_page({super.key});
+  final internModel internData;
+  const profile_page({super.key, required this.internData});
 
   @override
   Widget build(BuildContext context) {
-    const String appTitle = "Create Intern ID";
+    const String appTitle = "My Profile";
 
     return MaterialApp(
       title: appTitle,
@@ -37,11 +39,11 @@ class profile_page extends StatelessWidget {
             children: [
               HeaderSection("My Profile"),
               InternIDCard(
-                name: "Kaiehla Espiritu",
-                birthday: "04/14/02",
-                school: "University of Santo Tomas",
-                company: "Symph",
-                position: "UI/UX Designer",
+                name: internData.name,
+                birthday: internData.birthday.toString(),
+                school: internData.school,
+                company: internData.company,
+                position: internData.position,
               ),
               const SizedBox(height: 15),
 
@@ -51,7 +53,7 @@ class profile_page extends StatelessWidget {
                 children: const [
                   InfoCard(
                     title: "Start Date",
-                    value: "01/28/25",
+                    value: "03/21/25",
                   ),
                   SizedBox(width: 15),
                   InfoCard(
@@ -169,6 +171,7 @@ class profile_page extends StatelessWidget {
   }
 }
 
+//GENERAL CARD
 class GeneralCard extends StatelessWidget {
   final List<Map<String, dynamic>> items;
 
@@ -209,7 +212,7 @@ class GeneralCard extends StatelessWidget {
                 const Padding(
                   padding: EdgeInsets.symmetric(vertical: 8),
                   child: DottedLine(
-                    padding: 1, // Adjust if needed
+                    padding: 1,
                     color: Colors.black, // Match the color of the divider
                   ),
                 ),
@@ -261,7 +264,7 @@ class SettingsCard extends StatelessWidget {
                 const Padding(
                   padding: EdgeInsets.symmetric(vertical: 8),
                   child: DottedLine(
-                    padding: 1, // Adjust if needed
+                    padding: 1,
                     color: Colors.black, // Match the color of the divider
                   ),
                 ),
@@ -277,7 +280,7 @@ class InfoCard extends StatelessWidget {
   final String title;
   final String value;
 
-  const InfoCard({
+   const InfoCard({
     required this.title,
     required this.value,
     super.key,
