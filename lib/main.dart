@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:intern_flutter/models/wprModel.dart';
 import 'package:intern_flutter/pages/add_log_page.dart';
-import 'package:intern_flutter/pages/profile_page.dart';
 import 'package:intern_flutter/pages/register_page.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intern_flutter/pages/weekly_tasks_page.dart';
@@ -9,6 +9,7 @@ import 'package:intern_flutter/pages/onboarding_page.dart';
 import 'package:flutter/services.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:intern_flutter/firebase_options.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intern_flutter/utils/globals.dart';
 
 //controllers
@@ -428,12 +429,11 @@ class _AddWPRState extends State<AddWPR> {
     );
     if (pickedStartDate != null) {
       setState(() {
-        _selectedStartDate = pickedStartDate;
-        _startDateController.text =
-        "${pickedStartDate.day}/${pickedStartDate.month}/${pickedStartDate.year}";
-
-        _validateStartDate = false; //clear error if valid date is selected
-      });
+       _selectedStartDate = pickedStartDate;
+       _startDateController.text =
+         "${pickedStartDate.day}/${pickedStartDate.month}/${pickedStartDate.year}";
+         // _validateStartDate = false; //clear error if valid date is selected
+       });
     }
   }
 
@@ -449,34 +449,101 @@ class _AddWPRState extends State<AddWPR> {
         _selectedEndDate = pickedEndDate;
         _endDateController.text =
         "${pickedEndDate.day}/${pickedEndDate.month}/${pickedEndDate.year}";
-
-        _validateEndDate = false; //clear error if valid date is selected
+        // _validateEndDate = false; //clear error if valid date is selected
       });
     }
   }
 
+  // implement a list of user model
+  List<wprModel> wprList = [];
+
   //validations
   void validateWprFields() {
+    //ginanto ko kasi may scenario na nawawala yung error checking/warning sa EndDate pag sinave ko kahit StartDate lng may laman
     // setState(() {
-    //   // _validateStartDate = _startDateController.text.isEmpty;
-    //   _validateStartDate = _selectedStartDate == null;
-    //   // _validateEndDate = _endDateController.text.isEmpty;
-    //   _validateEndDate = _selectedStartDate == null;
-    //   _validateWprNum = _wprNumController.text.isEmpty;
+    //   if (_wprNumController.text.isEmpty) {
+    //     _validateWprNum = true;
+    //   }
+    //   if (_selectedStartDate == null) {
+    //     _validateStartDate = true;
+    //   }
+    //   if (_selectedEndDate == null) {
+    //     _validateEndDate = true;
+    //   }
     // });
 
-    //ginanto ko kasi may scenario na nawawala yung error checking/warning sa EndDate pag sinave ko kahit StartDate lng may laman
     setState(() {
-      if (_wprNumController.text.isEmpty) {
-        _validateWprNum = true;
-      }
-      if (_selectedStartDate == null) {
-        _validateStartDate = true;
-      }
-      if (_selectedEndDate == null) {
-        _validateEndDate = true;
-      }
+      _validateWprNum = _wprNumController.text.isEmpty;
+      _validateStartDate = _selectedStartDate == null;
+      _validateEndDate = _selectedEndDate == null;
     });
+
+    if(!_validateWprNum && !_validateStartDate && !_validateEndDate){
+      wprModel newWpr = wprModel(wprNum: int.parse(_wprNumController.text), startDate: _selectedStartDate!, endDate: _selectedEndDate!);
+
+      wprList.add(newWpr);
+
+      FirebaseFirestore.instance.collection('wpr_logs').add({
+        'wprNum': newWpr.wprNum,
+        'startDate': newWpr.startDate,
+        'endDate': newWpr.endDate,
+      }).then((DocumentReference doc) {
+        print('DocumentSnapshot added with ID: ${doc.id}');
+      }).catchError((error) {
+        print('Error adding document: $error');
+      });
+
+      //clear all field
+      _wprNumController.clear();
+      _selectedStartDate = null;
+      _selectedEndDate = null;
+    }
+  }
+
+  // update function - dito sa example na to need muna ilagay yung name as an indentification para malaman kung anong data yung iuupdate
+  int searchIndex(int wprNum) {
+    return wprList.indexWhere((element) => element.wprNum == wprNum);
+  }
+
+  void updateWpr() {
+    _validateWprNum = _wprNumController.text.isEmpty;
+    _validateStartDate = _selectedStartDate == null;
+    _validateEndDate = _selectedEndDate == null;
+
+    if (!_validateWprNum &&
+        !_validateStartDate &&
+        !_validateEndDate) {
+      // update function
+      //update to firebase database by id and name
+      FirebaseFirestore.instance
+          .collection('wpr_logs')
+          .where('wprNum', isEqualTo: int.parse(_wprNumController.text))
+          .get()
+          .then((QuerySnapshot querySnapshot) {
+        querySnapshot.docs.forEach((doc) {
+          FirebaseFirestore.instance
+              .collection('wpr_logs')
+              .doc(doc.id)
+              .update({
+            'startDate': _selectedStartDate!,
+            'endDate': _selectedEndDate!,
+          }).then((value) {
+            print("WPR Updated");
+          }).catchError((error) {
+            print("Failed to update WPR: $error");
+          });
+        });
+      });
+
+      int searchedIndex = searchIndex(int.parse(_wprNumController.text));
+      // check if name exists
+      if (searchedIndex != -1) {
+        setState(() {
+          wprList[searchedIndex].startDate = _selectedStartDate!;
+          wprList[searchedIndex].endDate = _selectedEndDate!;
+        });
+      }
+    }
   }
 
   @override
@@ -576,19 +643,31 @@ class _AddWPRState extends State<AddWPR> {
           child: Text("Cancel"),
         ),
         ElevatedButton(
-          onPressed: () {
-            setState(() {
-              validateWprFields();
-
-              if (!_validateStartDate && !_validateEndDate) {
+          onPressed:
+            // wprList.isNotEmpty ? null : () {
+              () {
+              setState(() {
                 validateWprFields();
-              }
-            });
-          },
+                });
+            },
           style: FilledButton.styleFrom(
             backgroundColor: Theme.of(context).colorScheme.inversePrimary,
           ),
           child: Text("Save",
+            style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+                color: Theme.of(context).colorScheme.onPrimaryContainer),
+          ),
+        ),
+        ElevatedButton(
+          onPressed: () {
+              updateWpr();
+          },
+          style: FilledButton.styleFrom(
+            backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+          ),
+          child: Text("Update",
             style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.bold,
