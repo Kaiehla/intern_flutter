@@ -9,6 +9,7 @@ import 'package:intern_flutter/pages/onboarding_page.dart';
 import 'package:flutter/services.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:intern_flutter/firebase_options.dart';
+import 'package:intern_flutter/utils/globals.dart';
 
 //controllers
 final TextEditingController _startDateController = TextEditingController();
@@ -204,7 +205,7 @@ class ProgressSection extends StatelessWidget{
                     ),
                   ),
                   Text(
-                    "UI/UX Designer",
+                    globals.internId,
                     style: TextStyle(
                       fontSize: 24,
                       color: Colors.black,

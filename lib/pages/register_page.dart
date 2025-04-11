@@ -10,6 +10,7 @@ import 'package:intern_flutter/utils/validations.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:intern_flutter/firebase_options.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:intern_flutter/utils/globals.dart';
 
 // Controllers para makuha yung value ng textfields
 final TextEditingController _pronounsController = TextEditingController();
@@ -172,7 +173,6 @@ class _TextFieldSectionState extends State<TextFieldSection> {
           internData['startDate'] =
               (internData['startDate'] as Timestamp).toDate();
         }
-        // Handle null values with default values
         interns.add(internModel(
           id: doc.id,
           pronouns: internData['pronouns'] ?? 'Not specified',
@@ -257,7 +257,16 @@ class _TextFieldSectionState extends State<TextFieldSection> {
           startDate: _selectedStartDate!,
           hoursRequired: int.parse(_hoursRequiredController.text),
         ));
+        // set the intern id to globals
+        globals.internId = docRef.id;
         print("Intern added successfully with ID: ${docRef.id}");
+        //redirect to main
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => MyApp(),
+          ),
+        );
       });
 
       // Clear all fields
@@ -300,7 +309,7 @@ class _TextFieldSectionState extends State<TextFieldSection> {
               "${_selectedStartDate!.day}/${_selectedStartDate!.month}/${_selectedStartDate!.year}";
           _hoursRequiredController.text =
               internData['hoursRequired'].toString();
-          internId = documentId; // Store the document ID for later use
+          globals.internId = documentId; // Store the document ID for later use
         });
       } else {
         print("Document with ID $documentId does not exist.");
@@ -725,15 +734,15 @@ class _TextFieldSectionState extends State<TextFieldSection> {
               ),
               Expanded(
                 child: FilledButton(
-                  onPressed: internId.isEmpty
+                  onPressed: globals.internId.isEmpty
                       ? null
                       : () {
                           setState(() {
-                            updateInternById(internId);
+                            updateInternById(globals.internId);
                           });
                         },
                   style: FilledButton.styleFrom(
-                    backgroundColor: internId.isEmpty
+                    backgroundColor: globals.internId.isEmpty
                         ? Colors.grey
                         : Theme.of(context).colorScheme.inversePrimary,
                     shape: RoundedRectangleBorder(
@@ -748,7 +757,7 @@ class _TextFieldSectionState extends State<TextFieldSection> {
                       style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.bold,
-                        color: internId.isEmpty
+                        color: globals.internId.isEmpty
                             ? Colors.black38
                             : Theme.of(context).colorScheme.onPrimaryContainer,
                       ),
@@ -758,15 +767,15 @@ class _TextFieldSectionState extends State<TextFieldSection> {
               ),
               Expanded(
                 child: FilledButton(
-                  onPressed: internId.isEmpty
+                  onPressed: globals.internId.isEmpty
                       ? null
                       : () {
                           setState(() {
-                            deleteInternById(internId);
+                            deleteInternById(globals.internId);
                           });
                         },
                   style: FilledButton.styleFrom(
-                    backgroundColor: internId.isEmpty
+                    backgroundColor: globals.internId.isEmpty
                         ? Colors.grey
                         : Theme.of(context).colorScheme.inversePrimary,
                     shape: RoundedRectangleBorder(
@@ -781,7 +790,7 @@ class _TextFieldSectionState extends State<TextFieldSection> {
                       style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.bold,
-                        color: internId.isEmpty
+                        color: globals.internId.isEmpty
                             ? Colors.black38
                             : Theme.of(context).colorScheme.onPrimaryContainer,
                       ),
