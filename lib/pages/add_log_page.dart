@@ -3,7 +3,9 @@ import 'package:flutter/services.dart';
 import 'package:gif/gif.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../main.dart';
+// import '../models/logModel.dart';
 import '../utils/validations.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 // controllers
 final TextEditingController _taskController = TextEditingController();
@@ -401,7 +403,6 @@ class DottedLine extends StatelessWidget {
           children: List.generate(dashCount, (_) {
             return Padding(
               padding: const EdgeInsets.only(top: 3.0, bottom: 3.0),
-              // Adjust the padding value as needed
               child: SizedBox(
                 width: dashWidth,
                 height: dashHeight,
@@ -422,6 +423,225 @@ class DottedLine extends StatelessWidget {
 class ButtonFieldSection extends StatelessWidget {
   const ButtonFieldSection({super.key});
 
+  void addLogToFirestore(BuildContext context) async {
+    // Validate all fields
+    _validateTask = _taskController.text.isEmpty;
+    _validateDate = _dateController.text.isEmpty;
+    _validateHours = _hoursController.text.isEmpty;
+    _validateDescription = _descriptionController.text.isEmpty;
+
+    if (!_validateTask && !_validateDate && !_validateHours && !_validateDescription) {
+      try {
+        await FirebaseFirestore.instance.collection('progress_logs').add({
+          'task': _taskController.text,
+          'date': _dateController.text,
+          'hours': int.parse(_hoursController.text),
+          'description': _descriptionController.text,
+          'created_at': FieldValue.serverTimestamp(),
+        });
+
+        // If the above succeeds, show a success message
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Added progress log successfully!"),
+            backgroundColor: Colors.green,),
+        );
+
+        // xlear fields after successful submission
+        _taskController.clear();
+        _dateController.clear();
+        _hoursController.clear();
+        _descriptionController.clear();
+
+        // eto para mapunta sa home after submitting kaso ewan ko Navigate to the homepage after success
+        // Navigator.pushReplacement(
+        //   context,
+        //   MaterialPageRoute(builder: (context) => MyApp()),
+        // );
+      } catch (error) {
+        // If an error occurs, show an error message
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Failed to add log. Please try again.")),
+        );
+      }
+    } else {
+      // Trigger a rebuild of validation flags
+      (context as Element).markNeedsBuild();
+    }
+  }
+
+  // update
+  void updateLog(BuildContext context) async {
+    if (!_validateTask && !_validateDate && !_validateHours && !_validateDescription) {
+      try {
+        final querySnapshot = await FirebaseFirestore.instance
+            .collection('progress_logs')
+            .where('task', isEqualTo: _taskController.text)
+            .get();
+
+        if (querySnapshot.docs.isNotEmpty) {
+          int? hours = int.tryParse(_hoursController.text);
+          if (hours == null) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text("Hours must be a valid number."), backgroundColor: Colors.red),
+            );
+            return;
+          }
+
+          for (var doc in querySnapshot.docs) {
+            print("Updating document ID: ${doc.id}");
+            await FirebaseFirestore.instance
+                .collection('progress_logs')
+                .doc(doc.id)
+                .update({
+              'date': _dateController.text,
+              'hours': hours,
+              'description': _descriptionController.text,
+              'updated_at': FieldValue.serverTimestamp(),
+            });
+          }
+
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text("Progress log updated successfully!"),
+                backgroundColor: Colors.orangeAccent),
+          );
+
+        } else {
+          print("No matching document found for task: ${_taskController.text}");
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text("No matching log found to update."),
+                backgroundColor: Colors.grey),
+          );
+        }
+      } catch (error) {
+        print("Update failed: $error");
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Failed to update log: $error"),
+              backgroundColor: Colors.red),
+        );
+      }
+    } else {
+      (context as Element).markNeedsBuild();
+    }
+  }
+
+  //
+  // void updateLog(BuildContext context) async {
+  //   _validateTask = _taskController.text.isEmpty;
+  //   _validateDate = _dateController.text.isEmpty;
+  //   _validateHours = _hoursController.text.isEmpty;
+  //   _validateDescription = _descriptionController.text.isEmpty;
+  //
+  //   if (!_validateTask && !_validateDate && !_validateHours && !_validateDescription) {
+  //     try {
+  //       final querySnapshot = await FirebaseFirestore.instance
+  //           .collection('progress_logs')
+  //           .where('task', isEqualTo: _taskController.text)
+  //           .get();
+  //
+  //       if (querySnapshot.docs.isNotEmpty) {
+  //         int? hours = int.tryParse(_hoursController.text);
+  //         if (hours == null) {
+  //           ScaffoldMessenger.of(context).showSnackBar(
+  //             SnackBar(content: Text("Hours must be a valid number."), backgroundColor: Colors.red),
+  //           );
+  //           return;
+  //         }
+  //
+  //         LogModel updatedLog = LogModel(
+  //           task: _taskController.text,
+  //           date: DateTime.parse(_dateController.text),
+  //           hours: hours,
+  //           description: _descriptionController.text,
+  //         );
+  //
+  //         for (var doc in querySnapshot.docs) {
+  //           await FirebaseFirestore.instance
+  //               .collection('progress_logs')
+  //               .doc(doc.id)
+  //               .update({
+  //             ...updatedLog.toJson(),
+  //             'updated_at': FieldValue.serverTimestamp(),
+  //           });
+  //         }
+  //
+  //         ScaffoldMessenger.of(context).showSnackBar(
+  //           SnackBar(
+  //             content: Text("Progress log updated successfully!"),
+  //             backgroundColor: Colors.orangeAccent,
+  //           ),
+  //         );
+  //
+  //       } else {
+  //         ScaffoldMessenger.of(context).showSnackBar(
+  //           SnackBar(
+  //             content: Text("No matching log found to update."),
+  //             backgroundColor: Colors.grey,
+  //           ),
+  //         );
+  //       }
+  //     } catch (error) {
+  //       ScaffoldMessenger.of(context).showSnackBar(
+  //         SnackBar(
+  //           content: Text("Failed to update log: $error"),
+  //           backgroundColor: Colors.red,
+  //         ),
+  //       );
+  //     }
+  //   } else {
+  //     (context as Element).markNeedsBuild();
+  //   }
+  // }
+
+
+
+  // delete
+
+  void deleteLog(BuildContext context) async {
+    try {
+      final querySnapshot = await FirebaseFirestore.instance
+          .collection('progress_logs')
+          .where('task', isEqualTo: _taskController.text)
+          .get();
+
+      if (querySnapshot.docs.isNotEmpty) {
+        for (var doc in querySnapshot.docs) {
+          await FirebaseFirestore.instance
+              .collection('progress_logs')
+              .doc(doc.id)
+              .delete();
+        }
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text("Progress log deleted successfully."),
+            backgroundColor: Colors.red,
+          ),
+        );
+
+        _taskController.clear();
+        _dateController.clear();
+        _hoursController.clear();
+        _descriptionController.clear();
+
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text("No matching log found to delete."),
+            backgroundColor: Colors.orange,
+          ),
+        );
+      }
+    } catch (e) {
+      print("Failed to delete log: $e");
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("Failed to delete log."),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Padding(
@@ -432,10 +652,9 @@ class ButtonFieldSection extends StatelessWidget {
           children: [
             Expanded(
               child: FilledButton(
-                onPressed: () => Navigator.push(
-                    context, MaterialPageRoute(builder: (context) => MyApp())),
+                onPressed: () => addLogToFirestore(context),
                 style: FilledButton.styleFrom(
-                  backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+                  backgroundColor: Theme.of(context).colorScheme.primary,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
                     side: BorderSide(color: Colors.black, width: 2),
@@ -444,18 +663,68 @@ class ButtonFieldSection extends StatelessWidget {
                 child: Padding(
                   padding: EdgeInsets.symmetric(vertical: 12),
                   child: Text(
-                    "Back to Home",
+                    "Submit",
                     style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.bold,
-                        color:
-                            Theme.of(context).colorScheme.onPrimaryContainer),
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                      color: Theme.of(context).colorScheme.onPrimary,
+                    ),
                   ),
                 ),
               ),
             ),
+            SizedBox(width: 12),
+            Expanded(
+              child: FilledButton(
+                onPressed: () => updateLog(context),
+                style: FilledButton.styleFrom(
+                  backgroundColor: Colors.orange.shade400,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    side: BorderSide(color: Colors.black, width: 2),
+                  ),
+                ),
+                child: Padding(
+                  padding: EdgeInsets.symmetric(vertical: 12),
+                  child: Text(
+                    "Update",
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            SizedBox(width: 12),
+            Expanded(
+              child: FilledButton(
+                onPressed: () => deleteLog(context),
+                style: FilledButton.styleFrom(
+                  backgroundColor: Colors.red.shade400,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    side: BorderSide(color: Colors.black, width: 2),
+                  ),
+                ),
+                child: Padding(
+                  padding: EdgeInsets.symmetric(vertical: 12),
+                  child: Text(
+                    "Delete",
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+
           ],
         ),
+
       ),
     );
   }
