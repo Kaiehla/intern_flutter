@@ -113,12 +113,12 @@ class _DrwListView extends State<DrwListView> {
           onTap: () => Navigator.push(
               context, MaterialPageRoute(builder: (context) => add_log_page())),
         ),
-        // ListTile(
-        //   title: Text("My Intern"),
-        //   leading: Icon(Icons.person),
-        //   onTap: () => Navigator.push(
-        //       context, MaterialPageRoute(builder: (context) => profile_page(internData: ,))),
-        // ),
+        ListTile(
+          title: Text("My Intern"),
+          leading: Icon(Icons.person),
+          onTap: () => Navigator.push(
+              context, MaterialPageRoute(builder: (context) => profile_page())),
+        ),
         ListTile(
           title: Text("Onboarding"),
           leading: Icon(Icons.video_collection_outlined),
