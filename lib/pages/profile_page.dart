@@ -4,10 +4,57 @@ import 'package:intern_flutter/models/internModel.dart';
 import 'package:intern_flutter/pages/register_page.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:gif/gif.dart';
+import 'package:intern_flutter/utils/globals.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
-class profile_page extends StatelessWidget {
-  final internModel internData;
-  const profile_page({super.key, required this.internData});
+
+//
+class profile_page extends StatefulWidget {
+  const profile_page({super.key});
+
+  @override
+  State<profile_page> createState() => _ProfilePageState();
+}
+
+class _ProfilePageState extends State<profile_page> {
+  internModel? internData;
+
+  @override
+  void initState() {
+    super.initState();
+    getInternInfoById(globals.internId);
+  }
+
+  void getInternInfoById(String documentId) async {
+    try {
+      DocumentSnapshot doc = await FirebaseFirestore.instance
+          .collection('interns')
+          .doc(documentId)
+          .get();
+
+      if (doc.exists) {
+        var data = doc.data() as Map<String, dynamic>;
+        setState(() {
+
+          internData = internModel(
+            id: documentId,
+            name: data['name'],
+            birthday: data['birthday'].toDate(),
+            school: data['school'],
+            company: data['company'],
+            position: data['position'],
+            startDate: data['startDate'].toDate(),
+            hoursRequired: data['hoursRequired'],
+            pronouns: data['pronouns'],
+          );
+        });
+      } else {
+        print("Document with ID $documentId does not exist.");
+      }
+    } catch (e) {
+      print("Error fetching intern info: $e");
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -26,7 +73,7 @@ class profile_page extends StatelessWidget {
           title: SizedBox(
             height: 42,
             child: Gif(
-              image: AssetImage("logo.gif"),
+              image: const AssetImage("logo.gif"),
               autostart: Autostart.loop,
             ),
           ),
@@ -34,58 +81,71 @@ class profile_page extends StatelessWidget {
         ),
         body: Padding(
           padding: const EdgeInsets.all(16),
-          child: Column(
+          child: internData == null
+              ? const Center(child: CircularProgressIndicator())
+              : Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               HeaderSection("My Profile"),
               InternIDCard(
-                name: internData.name,
-                birthday: internData.birthday.toString(),
-                school: internData.school,
-                company: internData.company,
-                position: internData.position,
+                name: internData!.name,
+                birthday:
+                "${internData!.birthday.day}/${internData!.birthday.month}/${internData!.birthday.year}",
+                school: internData!.school,
+                company: internData!.company,
+                position: internData!.position,
               ),
               const SizedBox(height: 15),
 
-              // Info Card Row (Start Date and Hours Req)
+              // Info Cards
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
-                children: const [
+                children: [
                   InfoCard(
                     title: "Start Date",
-                    value: "03/21/25",
+                    value:
+                    "${internData!.startDate.day}/${internData!.startDate.month}/${internData!.startDate.year}",
                   ),
-                  SizedBox(width: 15),
+                  const SizedBox(width: 15),
                   InfoCard(
                     title: "Hours Required",
-                    value: "500",
+                    value: internData!.hoursRequired.toString(),
                   ),
                 ],
               ),
 
-              // General Settings Row
+              // General Settings
               Padding(
                 padding: const EdgeInsets.only(top: 16),
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start, // Align the label and card to the left
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const Text(
-                      "General", // Label above the GeneralCard
+                      "General",
                       style: TextStyle(
                         fontSize: 16,
-                        fontWeight: FontWeight.bold, // Make it prominent
+                        fontWeight: FontWeight.bold,
                       ),
                     ),
-                    const SizedBox(height: 8), // Spacing between label and card
+                    const SizedBox(height: 8),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
+                      children: const [
                         Expanded(
                           child: GeneralCard(
-                            items: const [
-                              {'icon': Icons.badge_outlined, 'text': 'Edit My Intern ID'},
-                              {'icon': Icons.calendar_month_rounded, 'text': 'Edit Internship Hours & Start Date'},
-                              {'icon': Icons.file_upload_outlined, 'text': 'Export all progress and data'},
+                            items: [
+                              {
+                                'icon': Icons.badge_outlined,
+                                'text': 'Edit My Intern ID'
+                              },
+                              {
+                                'icon': Icons.calendar_month_rounded,
+                                'text': 'Edit Internship Hours & Start Date'
+                              },
+                              {
+                                'icon': Icons.file_upload_outlined,
+                                'text': 'Export all progress and data'
+                              },
                             ],
                           ),
                         ),
@@ -95,14 +155,14 @@ class profile_page extends StatelessWidget {
                 ),
               ),
 
-              // Settings Row
+              // Settings
               Padding(
                 padding: const EdgeInsets.only(top: 16),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const Text(
-                      "Settings", // Add label above the card
+                      "Settings",
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
@@ -111,13 +171,22 @@ class profile_page extends StatelessWidget {
                     const SizedBox(height: 8),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
+                      children: const [
                         Expanded(
                           child: SettingsCard(
-                            items: const [
-                              {'icon': Icons.warning_amber_rounded, 'text': 'Erase all my progress and data'},
-                              {'icon': Icons.bug_report_outlined, 'text': 'Report a problem'},
-                              {'icon': Icons.fact_check_outlined, 'text': 'Terms and Conditions'},
+                            items: [
+                              {
+                                'icon': Icons.warning_amber_rounded,
+                                'text': 'Erase all my progress and data'
+                              },
+                              {
+                                'icon': Icons.bug_report_outlined,
+                                'text': 'Report a problem'
+                              },
+                              {
+                                'icon': Icons.fact_check_outlined,
+                                'text': 'Terms and Conditions'
+                              },
                             ],
                           ),
                         ),
@@ -135,22 +204,26 @@ class profile_page extends StatelessWidget {
                     Expanded(
                       child: FilledButton(
                         onPressed: () => Navigator.push(
-                            context, MaterialPageRoute(builder: (context) => MyApp())),
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) => MyApp())),
                         style: FilledButton.styleFrom(
-                          backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+                          backgroundColor: Theme.of(context)
+                              .colorScheme
+                              .inversePrimary,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12),
-                            side: BorderSide(color: Colors.black, width: 2),
+                            side: const BorderSide(
+                                color: Colors.black, width: 2),
                           ),
                         ),
-                        child: Padding(
+                        child: const Padding(
                           padding: EdgeInsets.symmetric(vertical: 12),
                           child: Text(
                             "Back to Home",
                             style: TextStyle(
                                 fontSize: 14,
-                                fontWeight: FontWeight.bold,
-                                color: Theme.of(context).colorScheme.onPrimaryContainer),
+                                fontWeight: FontWeight.bold),
                           ),
                         ),
                       ),
@@ -170,6 +243,7 @@ class profile_page extends StatelessWidget {
     );
   }
 }
+
 
 //GENERAL CARD
 class GeneralCard extends StatelessWidget {

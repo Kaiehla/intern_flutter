@@ -10,6 +10,7 @@ import 'package:intern_flutter/utils/validations.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:intern_flutter/firebase_options.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:intern_flutter/utils/globals.dart';
 
 // Controllers para makuha yung value ng textfields
 final TextEditingController _pronounsController = TextEditingController();
@@ -31,6 +32,7 @@ bool _validateCompany = false;
 bool _validatePosition = false;
 bool _validateStartDate = false;
 bool _validateHoursRequired = false;
+String internId = "";
 
 class register_page extends StatelessWidget {
   const register_page({super.key});
@@ -154,8 +156,53 @@ class _TextFieldSectionState extends State<TextFieldSection> {
   // implement a list of user model
   List<internModel> internList = [];
 
+  // get all interns from firebase
+  void getAllInterns() async {
+    try {
+      QuerySnapshot querySnapshot =
+          await FirebaseFirestore.instance.collection('interns').get();
+      List<internModel> interns = [];
+      for (var doc in querySnapshot.docs) {
+        var internData = doc.data() as Map<String, dynamic>;
+        // Convert Timestamp fields to DateTime
+        if (internData['birthday'] is Timestamp) {
+          internData['birthday'] =
+              (internData['birthday'] as Timestamp).toDate();
+        }
+        if (internData['startDate'] is Timestamp) {
+          internData['startDate'] =
+              (internData['startDate'] as Timestamp).toDate();
+        }
+        interns.add(internModel(
+          id: doc.id,
+          pronouns: internData['pronouns'] ?? 'Not specified',
+          name: internData['name'] ?? 'Unknown',
+          birthday: internData['birthday'] ?? DateTime(1900, 1, 1),
+          school: internData['school'] ?? 'Unknown',
+          company: internData['company'] ?? 'Unknown',
+          position: internData['position'] ?? 'Unknown',
+          startDate: internData['startDate'] ?? DateTime(1900, 1, 1),
+          hoursRequired: internData['hoursRequired'] ?? 0,
+        ));
+      }
+      setState(() {
+        internList = interns;
+      });
+    } catch (e) {
+      print("Error fetching interns: $e");
+    }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    getAllInterns();
+  }
+
   // validations
-  void validateIDFields() {
+  bool validateIDFields() {
+    bool isValid = false;
+
     setState(() {
       _selectedPronoun == null;
       _validateName = _nameController.text.isEmpty;
@@ -174,146 +221,192 @@ class _TextFieldSectionState extends State<TextFieldSection> {
           !_validatePosition &&
           !_validateStartDate &&
           !_validateHoursRequired) {
-        // save to model and sharedprefs
-        internModel newIntern = internModel(
-            pronouns: _selectedPronoun!,
-            name: _nameController.text,
-            birthday: _selectedBirthday!,
-            school: _schoolController.text,
-            company: _companyController.text,
-            position: _positionController.text,
-            startDate: _selectedStartDate!,
-            hoursRequired: int.parse(_hoursRequiredController.text));
-        // prefsService.saveIntern(newIntern);
-        //go to main page
-        // Navigator.push(
-        //   context,
-        //   MaterialPageRoute(builder: (context) => profile_page(internData: newIntern)),
-        // );
-        // add to list
-        internList.add(newIntern);
-        // add to firebase database
-       FirebaseFirestore.instance.collection('interns').add({
-         'pronouns': newIntern.pronouns,
-         'name': newIntern.name,
-         'birthday': newIntern.birthday,
-         'school': newIntern.school,
-         'company': newIntern.company,
-         'position': newIntern.position,
-         'startDate': newIntern.startDate,
-         'hoursRequired': newIntern.hoursRequired,
-       }).then((DocumentReference doc) {
-         print('DocumentSnapshot added with ID: ${doc.id}');
-       }).catchError((error) {
-         print('Error adding document: $error');
-       });
-
-        //clear all fields
-        _selectedPronoun = "He/Him";
-        _nameController.clear();
-        _selectedBirthday = null;
-        _birthdayController.clear();
-        _schoolController.clear();
-        _companyController.clear();
-        _positionController.clear();
-        _selectedStartDate = null;
-        _startDateController.clear();
-        _hoursRequiredController.clear();
+        isValid = true;
       }
     });
+    return isValid;
   }
 
-  // update function - dito sa example na to need muna ilagay yung name as an indentification para malaman kung anong data yung iuupdate
-  int searchIndex(String name) {
-    return internList.indexWhere((element) => element.name == name);
-  }
-
-  void updateUser() {
-    _selectedPronoun == null;
-    _validateName = _nameController.text.isEmpty;
-    _validateBirthday = _birthdayController.text.isEmpty;
-    _validateSchool = _schoolController.text.isEmpty;
-    _validateCompany = _companyController.text.isEmpty;
-    _validatePosition = _positionController.text.isEmpty;
-    _validateStartDate = _selectedStartDate == null;
-    _validateHoursRequired = _hoursRequiredController.text.isEmpty;
-
-    if (!_validateName &&
-        !_validateBirthday &&
-        !_validateSchool &&
-        !_validateCompany &&
-        !_validatePosition &&
-        !_validateStartDate &&
-        !_validateHoursRequired) {
-      // update function
-      //update to firebase database by id and name
-      FirebaseFirestore.instance
-          .collection('interns')
-          .where('name', isEqualTo: _nameController.text)
-          .get()
-          .then((QuerySnapshot querySnapshot) {
-        querySnapshot.docs.forEach((doc) {
-          FirebaseFirestore.instance
-              .collection('interns')
-              .doc(doc.id)
-              .update({
-            'pronouns': _selectedPronoun!,
-            'birthday': _selectedBirthday!,
-            'school': _schoolController.text,
-            'company': _companyController.text,
-            'position': _positionController.text,
-            'startDate': _selectedStartDate!,
-            'hoursRequired': int.parse(_hoursRequiredController.text),
-          }).then((value) {
-            print("User Updated");
-          }).catchError((error) {
-            print("Failed to update user: $error");
-          });
-        });
+  // add to database
+  void addIntern() async {
+    if (!validateIDFields()) {
+      return;
+    }
+    try {
+      // Save to Firebase and get the document reference
+      await FirebaseFirestore.instance.collection('interns').add({
+        'pronouns': _selectedPronoun,
+        'name': _nameController.text,
+        'birthday': _selectedBirthday,
+        'school': _schoolController.text,
+        'company': _companyController.text,
+        'position': _positionController.text,
+        'startDate': _selectedStartDate,
+        'hoursRequired': int.parse(_hoursRequiredController.text),
+      }).then((docRef) {
+        // Use the document ID from the added document
+        internList.add(internModel(
+          id: docRef.id,
+          // Assign the generated document ID
+          pronouns: _selectedPronoun!,
+          name: _nameController.text,
+          birthday: _selectedBirthday!,
+          school: _schoolController.text,
+          company: _companyController.text,
+          position: _positionController.text,
+          startDate: _selectedStartDate!,
+          hoursRequired: int.parse(_hoursRequiredController.text),
+        ));
+        // set the intern id to globals
+        globals.internId = docRef.id;
+        print("Intern added successfully with ID: ${docRef.id}");
+        //redirect to main
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => MyApp(),
+          ),
+        );
       });
 
-      int searchedIndex = searchIndex(_nameController.text);
-      // check if name exists
-      if (searchedIndex != -1) {
-        setState(() {
-          internList[searchedIndex].pronouns = _selectedPronoun!;
-          internList[searchedIndex].birthday = _selectedBirthday!;
-          internList[searchedIndex].school = _schoolController.text;
-          internList[searchedIndex].company = _companyController.text;
-          internList[searchedIndex].position = _positionController.text;
-          internList[searchedIndex].startDate = _selectedStartDate!;
-          internList[searchedIndex].hoursRequired =
-              int.parse(_hoursRequiredController.text);
-        });
-
-
-      }
+      // Clear all fields
+      _selectedPronoun = "He/Him";
+      _nameController.clear();
+      _selectedBirthday = null;
+      _birthdayController.clear();
+      _schoolController.clear();
+      _companyController.clear();
+      _positionController.clear();
+      _selectedStartDate = null;
+      _startDateController.clear();
+      _hoursRequiredController.clear();
+    } catch (e) {
+      print("Error adding intern: $e");
     }
   }
 
-  // delete function
-  void deleteUser() {
-    // int searchedIndex = searchIndex(_nameController.text);
-    // internList.removeAt(searchedIndex);
+  // get data from data
+  void getInternInfoById(String documentId) async {
+    try {
+      DocumentSnapshot doc = await FirebaseFirestore.instance
+          .collection('interns')
+          .doc(documentId)
+          .get();
 
-    //delete to firebase database by name
-    FirebaseFirestore.instance
-        .collection('interns')
-        .where('name', isEqualTo: _nameController.text)
-        .get()
-        .then((QuerySnapshot querySnapshot) {
-      querySnapshot.docs.forEach((doc) {
-        FirebaseFirestore.instance
-            .collection('interns')
-            .doc(doc.id)
-            .delete()
-            .then((value) {
-          print("User Deleted");
-        }).catchError((error) {
-          print("Failed to delete user: $error");
+      if (doc.exists) {
+        var internData = doc.data() as Map<String, dynamic>;
+        setState(() {
+          _selectedPronoun = internData['pronouns'];
+          _nameController.text = internData['name'];
+          _selectedBirthday = internData['birthday'].toDate();
+          _birthdayController.text =
+              "${_selectedBirthday!.day}/${_selectedBirthday!.month}/${_selectedBirthday!.year}";
+          _schoolController.text = internData['school'];
+          _companyController.text = internData['company'];
+          _positionController.text = internData['position'];
+          _selectedStartDate = internData['startDate'].toDate();
+          _startDateController.text =
+              "${_selectedStartDate!.day}/${_selectedStartDate!.month}/${_selectedStartDate!.year}";
+          _hoursRequiredController.text =
+              internData['hoursRequired'].toString();
+          globals.internId = documentId; // Store the document ID for later use
         });
+      } else {
+        print("Document with ID $documentId does not exist.");
+      }
+    } catch (e) {
+      print("Error fetching intern info: $e");
+    }
+  }
+
+  // void updateUser(String internId) async {
+  //   // Validate fields
+  //   if (!validateIDFields()) {
+  //     return;
+  //   }
+  //   try {
+  //     await FirebaseFirestore.instance
+  //         .collection('interns')
+  //         .doc(internId)
+  //         .update({
+  //       'name': _nameController.text,
+  //       'pronouns': _selectedPronoun!,
+  //       'birthday': _selectedBirthday!,
+  //       'school': _schoolController.text,
+  //       'company': _companyController.text,
+  //       'position': _positionController.text,
+  //       'startDate': _selectedStartDate!,
+  //       'hoursRequired': int.parse(_hoursRequiredController.text),
+  //     });
+  //     print("Intern updated successfully.");
+  //   } catch (e) {
+  //     print("An error occurred while updating the intern: $e");
+  //   }
+  // }
+
+// update the intern data by id
+
+  void updateInternById(String documentId) async {
+    // Validate fields
+    if (!validateIDFields()) {
+      return;
+    }
+    try {
+      await FirebaseFirestore.instance
+          .collection('interns')
+          .doc(documentId)
+          .update({
+        'name': _nameController.text,
+        'pronouns': _selectedPronoun!,
+        'birthday': _selectedBirthday!,
+        'school': _schoolController.text,
+        'company': _companyController.text,
+        'position': _positionController.text,
+        'startDate': _selectedStartDate!,
+        'hoursRequired': int.parse(_hoursRequiredController.text),
       });
-    });
+      print("Intern Updated Successfully with ID: ${documentId}");
+    } catch (e) {
+      print("Error fetching intern info: $e");
+    }
+  }
+
+// delete function
+//   void deleteUser() {
+//     // int searchedIndex = searchIndex(_nameController.text);
+//     // internList.removeAt(searchedIndex);
+//
+//     //delete to firebase database by name
+//     FirebaseFirestore.instance
+//         .collection('interns')
+//         .where('name', isEqualTo: _nameController.text)
+//         .get()
+//         .then((QuerySnapshot querySnapshot) {
+//       querySnapshot.docs.forEach((doc) {
+//         FirebaseFirestore.instance
+//             .collection('interns')
+//             .doc(doc.id)
+//             .delete()
+//             .then((value) {
+//           print("User Deleted");
+//         }).catchError((error) {
+//           print("Failed to delete user: $error");
+//         });
+//       });
+//     });
+//   }
+
+  // delete by intern id
+  void deleteInternById(String documentId) async {
+    try {
+      await FirebaseFirestore.instance
+          .collection('interns')
+          .doc(documentId)
+          .delete();
+      print("Intern deleted successfully.");
+    } catch (e) {
+      print("Error deleting intern: $e");
+    }
   }
 
   @override
@@ -596,6 +689,10 @@ class _TextFieldSectionState extends State<TextFieldSection> {
                       Text(internList[index].hoursRequired.toString()),
                     ],
                   ),
+                  onTap: () {
+                    // Handle tap to get intern info by document id
+                    getInternInfoById(internList[index].id);
+                  },
                 );
               },
             )),
@@ -609,15 +706,14 @@ class _TextFieldSectionState extends State<TextFieldSection> {
             children: [
               Expanded(
                 child: FilledButton(
-                  onPressed: internList.isNotEmpty ? null : () {
+                  onPressed: () {
                     setState(() {
-                      validateIDFields();
+                      addIntern();
                     });
                   },
                   style: FilledButton.styleFrom(
-                    backgroundColor: internList.isNotEmpty
-                        ? Colors.grey
-                        : Theme.of(context).colorScheme.inversePrimary,
+                    backgroundColor:
+                        Theme.of(context).colorScheme.inversePrimary,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                       side: BorderSide(color: Colors.black, width: 2),
@@ -630,9 +726,7 @@ class _TextFieldSectionState extends State<TextFieldSection> {
                       style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.bold,
-                        color: internList.isNotEmpty
-                            ? Colors.black38
-                            : Theme.of(context).colorScheme.onPrimaryContainer,
+                        color: Theme.of(context).colorScheme.onPrimaryContainer,
                       ),
                     ),
                   ),
@@ -640,14 +734,17 @@ class _TextFieldSectionState extends State<TextFieldSection> {
               ),
               Expanded(
                 child: FilledButton(
-                  onPressed: () {
-                    setState(() {
-                      updateUser();
-                    });
-                  },
+                  onPressed: globals.internId.isEmpty
+                      ? null
+                      : () {
+                          setState(() {
+                            updateInternById(globals.internId);
+                          });
+                        },
                   style: FilledButton.styleFrom(
-                    backgroundColor:
-                        Theme.of(context).colorScheme.inversePrimary,
+                    backgroundColor: globals.internId.isEmpty
+                        ? Colors.grey
+                        : Theme.of(context).colorScheme.inversePrimary,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                       side: BorderSide(color: Colors.black, width: 2),
@@ -660,7 +757,9 @@ class _TextFieldSectionState extends State<TextFieldSection> {
                       style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.bold,
-                        color: Theme.of(context).colorScheme.onPrimaryContainer,
+                        color: globals.internId.isEmpty
+                            ? Colors.black38
+                            : Theme.of(context).colorScheme.onPrimaryContainer,
                       ),
                     ),
                   ),
@@ -668,14 +767,17 @@ class _TextFieldSectionState extends State<TextFieldSection> {
               ),
               Expanded(
                 child: FilledButton(
-                  onPressed: () {
-                    setState(() {
-                      deleteUser();
-                    });
-                  },
+                  onPressed: globals.internId.isEmpty
+                      ? null
+                      : () {
+                          setState(() {
+                            deleteInternById(globals.internId);
+                          });
+                        },
                   style: FilledButton.styleFrom(
-                    backgroundColor:
-                        Theme.of(context).colorScheme.inversePrimary,
+                    backgroundColor: globals.internId.isEmpty
+                        ? Colors.grey
+                        : Theme.of(context).colorScheme.inversePrimary,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                       side: BorderSide(color: Colors.black, width: 2),
@@ -684,11 +786,13 @@ class _TextFieldSectionState extends State<TextFieldSection> {
                   child: Padding(
                     padding: EdgeInsets.symmetric(vertical: 12),
                     child: Text(
-                      "Delete",
+                      "Reset",
                       style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.bold,
-                        color: Theme.of(context).colorScheme.onPrimaryContainer,
+                        color: globals.internId.isEmpty
+                            ? Colors.black38
+                            : Theme.of(context).colorScheme.onPrimaryContainer,
                       ),
                     ),
                   ),
