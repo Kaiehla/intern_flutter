@@ -10,6 +10,7 @@ import 'package:flutter/services.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:intern_flutter/firebase_options.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:intern_flutter/utils/globals.dart';
 
 //controllers
 final TextEditingController _startDateController = TextEditingController();
@@ -113,12 +114,12 @@ class _DrwListView extends State<DrwListView> {
           onTap: () => Navigator.push(
               context, MaterialPageRoute(builder: (context) => add_log_page())),
         ),
-        // ListTile(
-        //   title: Text("My Intern"),
-        //   leading: Icon(Icons.person),
-        //   onTap: () => Navigator.push(
-        //       context, MaterialPageRoute(builder: (context) => profile_page(internData: ,))),
-        // ),
+        ListTile(
+          title: Text("My Intern"),
+          leading: Icon(Icons.person),
+          onTap: () => Navigator.push(
+              context, MaterialPageRoute(builder: (context) => profile_page())),
+        ),
         ListTile(
           title: Text("Onboarding"),
           leading: Icon(Icons.video_collection_outlined),
@@ -205,7 +206,7 @@ class ProgressSection extends StatelessWidget{
                     ),
                   ),
                   Text(
-                    "UI/UX Designer",
+                    globals.internId,
                     style: TextStyle(
                       fontSize: 24,
                       color: Colors.black,

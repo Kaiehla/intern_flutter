@@ -1,4 +1,5 @@
 class internModel {
+  String id;
   String pronouns;
   String name;
   DateTime birthday;
@@ -9,6 +10,7 @@ class internModel {
   int hoursRequired;
 
   internModel({
+    required this.id,
     required this.pronouns,
     required this.name,
     required this.birthday,
@@ -21,6 +23,7 @@ class internModel {
 
   // Convert the model to JSON
   Map<String, dynamic> toJson() => {
+    'id': id,
     'pronouns': pronouns,
     'name': name,
     'birthday': birthday,
@@ -34,6 +37,7 @@ class internModel {
   // Create a model from JSON
   factory internModel.fromJson(Map<String, dynamic> json) {
     return internModel(
+      id: json['id'],
       pronouns: json['pronouns'],
       name: json['name'],
       birthday: json['birthday'],
