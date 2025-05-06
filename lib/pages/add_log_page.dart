@@ -1,83 +1,91 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:gif/gif.dart';
-import 'package:google_fonts/google_fonts.dart';
-import '../main.dart';
-// import '../models/logModel.dart';
-import '../utils/validations.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:flutter/services.dart';
+import '../utils/validations.dart';
 
-// controllers
 final TextEditingController _taskController = TextEditingController();
 final TextEditingController _dateController = TextEditingController();
 final TextEditingController _hoursController = TextEditingController();
 final TextEditingController _descriptionController = TextEditingController();
 
-// validations
 bool _validateTask = false;
 bool _validateDate = false;
 bool _validateHours = false;
 bool _validateDescription = false;
 
-class add_log_page extends StatelessWidget {
-  const add_log_page({super.key});
+class add_log_page extends StatefulWidget {
+  final String? logId;
+  final String? task;
+  final String? date;
+  final String? hours;
+  final String? description;
+
+  const add_log_page({
+    Key? key,
+    this.logId,
+    this.task,
+    this.date,
+    this.hours,
+    this.description,
+  }) : super(key: key);
+
+  @override
+  _AddLogPageState createState() => _AddLogPageState();
+}
+
+class _AddLogPageState extends State<add_log_page> {
+  @override
+  void initState() {
+    super.initState();
+    _taskController.text = widget.task ?? '';
+    _dateController.text = widget.date ?? '';
+    _hoursController.text = widget.hours ?? '';
+    _descriptionController.text = widget.description ?? '';
+  }
 
   @override
   Widget build(BuildContext context) {
-
     return MaterialApp(
-        title: "Add Progress",
-        theme: ThemeData(
-          colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-          useMaterial3: true,
-          textTheme: GoogleFonts.manropeTextTheme(),
-        ),
-        debugShowCheckedModeBanner: false,
-        home: Scaffold(
-            appBar: AppBar(
-              title: SizedBox(
-                height: 42,
-                child: Gif(
-                  image: AssetImage("logo.gif"),
-                  autostart: Autostart.loop,
-                ),
-              ),
-              centerTitle: true,
-              leading: IconButton(
-                icon: Icon(Icons.arrow_back),
-                onPressed: () {
-                  Navigator.pop(context);
-                },
-              ),
-            ),
-
-          body: LayoutBuilder(
-            builder: (context, constraints) {
-              return SingleChildScrollView(
-                child: ConstrainedBox(
-                  constraints: BoxConstraints(minHeight: constraints.maxHeight),
-                  child: Padding(
-                    padding:
-                    const EdgeInsets.only(left: 16, right: 16, bottom: 16),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        HeaderSection(),
-                        TextFieldSection(),
-                        ButtonFieldSection()
-                      ],
-                    ),
-                  ),
-                ),
-              );
+      title: "Add Progress",
+      theme: ThemeData(
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
+        useMaterial3: true,
+        textTheme: GoogleFonts.manropeTextTheme(),
+      ),
+      debugShowCheckedModeBanner: false,
+      home: Scaffold(
+        appBar: AppBar(
+          title: Text("Add Progress"),
+          centerTitle: true,
+          leading: IconButton(
+            icon: Icon(Icons.arrow_back),
+            onPressed: () {
+              Navigator.pop(context);
             },
           ),
-          drawer: Drawer(
-            child: ListView(
-              children: [DrwHeader(), DrwListView()],
-            ),
-          ),
         ),
+        body: LayoutBuilder(
+          builder: (context, constraints) {
+            return SingleChildScrollView(
+              child: ConstrainedBox(
+                constraints: BoxConstraints(minHeight: constraints.maxHeight),
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      HeaderSection(),
+                      TextFieldSection(),
+                      ButtonFieldSection(logId: widget.logId),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          },
+        ),
+      ),
     );
   }
 }
@@ -421,7 +429,8 @@ class DottedLine extends StatelessWidget {
 }
 
 class ButtonFieldSection extends StatelessWidget {
-  const ButtonFieldSection({super.key});
+  final String? logId;
+  const ButtonFieldSection({super.key, this.logId});
 
   void addLogToFirestore(BuildContext context) async {
     // Validate all fields
@@ -470,67 +479,7 @@ class ButtonFieldSection extends StatelessWidget {
   }
 
   // update
-  void updateLog(BuildContext context) async {
-    if (!_validateTask && !_validateDate && !_validateHours && !_validateDescription) {
-      try {
-        final querySnapshot = await FirebaseFirestore.instance
-            .collection('progress_logs')
-            .where('task', isEqualTo: _taskController.text)
-            .get();
-
-        if (querySnapshot.docs.isNotEmpty) {
-          int? hours = int.tryParse(_hoursController.text);
-          if (hours == null) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text("Hours must be a valid number."), backgroundColor: Colors.red),
-            );
-            return;
-          }
-
-          for (var doc in querySnapshot.docs) {
-            print("Updating document ID: ${doc.id}");
-            await FirebaseFirestore.instance
-                .collection('progress_logs')
-                .doc(doc.id)
-                .update({
-              'date': _dateController.text,
-              'hours': hours,
-              'description': _descriptionController.text,
-              'updated_at': FieldValue.serverTimestamp(),
-            });
-          }
-
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text("Progress log updated successfully!"),
-                backgroundColor: Colors.orangeAccent),
-          );
-
-        } else {
-          print("No matching document found for task: ${_taskController.text}");
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text("No matching log found to update."),
-                backgroundColor: Colors.grey),
-          );
-        }
-      } catch (error) {
-        print("Update failed: $error");
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Failed to update log: $error"),
-              backgroundColor: Colors.red),
-        );
-      }
-    } else {
-      (context as Element).markNeedsBuild();
-    }
-  }
-
-  //
   // void updateLog(BuildContext context) async {
-  //   _validateTask = _taskController.text.isEmpty;
-  //   _validateDate = _dateController.text.isEmpty;
-  //   _validateHours = _hoursController.text.isEmpty;
-  //   _validateDescription = _descriptionController.text.isEmpty;
-  //
   //   if (!_validateTask && !_validateDate && !_validateHours && !_validateDescription) {
   //     try {
   //       final querySnapshot = await FirebaseFirestore.instance
@@ -547,44 +496,36 @@ class ButtonFieldSection extends StatelessWidget {
   //           return;
   //         }
   //
-  //         LogModel updatedLog = LogModel(
-  //           task: _taskController.text,
-  //           date: DateTime.parse(_dateController.text),
-  //           hours: hours,
-  //           description: _descriptionController.text,
-  //         );
-  //
   //         for (var doc in querySnapshot.docs) {
+  //           print("Updating document ID: ${doc.id}");
   //           await FirebaseFirestore.instance
   //               .collection('progress_logs')
   //               .doc(doc.id)
   //               .update({
-  //             ...updatedLog.toJson(),
+  //             'date': _dateController.text,
+  //             'hours': hours,
+  //             'description': _descriptionController.text,
   //             'updated_at': FieldValue.serverTimestamp(),
   //           });
   //         }
   //
   //         ScaffoldMessenger.of(context).showSnackBar(
-  //           SnackBar(
-  //             content: Text("Progress log updated successfully!"),
-  //             backgroundColor: Colors.orangeAccent,
-  //           ),
+  //           SnackBar(content: Text("Progress log updated successfully!"),
+  //               backgroundColor: Colors.orangeAccent),
   //         );
   //
   //       } else {
+  //         print("No matching document found for task: ${_taskController.text}");
   //         ScaffoldMessenger.of(context).showSnackBar(
-  //           SnackBar(
-  //             content: Text("No matching log found to update."),
-  //             backgroundColor: Colors.grey,
-  //           ),
+  //           SnackBar(content: Text("No matching log found to update."),
+  //               backgroundColor: Colors.grey),
   //         );
   //       }
   //     } catch (error) {
+  //       print("Update failed: $error");
   //       ScaffoldMessenger.of(context).showSnackBar(
-  //         SnackBar(
-  //           content: Text("Failed to update log: $error"),
-  //           backgroundColor: Colors.red,
-  //         ),
+  //         SnackBar(content: Text("Failed to update log: $error"),
+  //             backgroundColor: Colors.red),
   //       );
   //     }
   //   } else {
@@ -593,9 +534,66 @@ class ButtonFieldSection extends StatelessWidget {
   // }
 
 
+  void updateLog(BuildContext context, String? logId) async {
+    if (logId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Log ID is null. Cannot update."), backgroundColor: Colors.red),
+      );
+      return;
+    }
+
+    // Debug log
+    print("Updating log with ID: $logId");
+    print("Task: ${_taskController.text}, Date: ${_dateController.text}, Hours: ${_hoursController.text}, Description: ${_descriptionController.text}");
+
+    // Validate fields
+    _validateTask = _taskController.text.isEmpty;
+    _validateDate = _dateController.text.isEmpty;
+    _validateHours = _hoursController.text.isEmpty;
+    _validateDescription = _descriptionController.text.isEmpty;
+
+    if (!_validateTask && !_validateDate && !_validateHours && !_validateDescription) {
+      try {
+        int? hours = int.tryParse(_hoursController.text);
+        if (hours == null) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text("Hours must be a valid number."), backgroundColor: Colors.red),
+          );
+          return;
+        }
+
+        await FirebaseFirestore.instance
+            .collection('progress_logs')
+            .doc(logId)
+            .update({
+          'task': _taskController.text,
+          'date': _dateController.text,
+          'hours': hours,
+          'description': _descriptionController.text,
+          'updated_at': FieldValue.serverTimestamp(),
+        });
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Progress log updated successfully!"), backgroundColor: Colors.orangeAccent),
+        );
+
+        // Clear fields after successful update
+        _taskController.clear();
+        _dateController.clear();
+        _hoursController.clear();
+        _descriptionController.clear();
+      } catch (error) {
+        print("Update failed: $error");
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Failed to update log: $error"), backgroundColor: Colors.red),
+        );
+      }
+    } else {
+      (context as Element).markNeedsBuild();
+    }
+  }
 
   // delete
-
   void deleteLog(BuildContext context) async {
     try {
       final querySnapshot = await FirebaseFirestore.instance
@@ -676,7 +674,15 @@ class ButtonFieldSection extends StatelessWidget {
             SizedBox(width: 12),
             Expanded(
               child: FilledButton(
-                onPressed: () => updateLog(context),
+                onPressed: () {
+                  if (logId != null) {
+                    updateLog(context, logId);
+                  } else {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text("Log ID is missing. Cannot update."), backgroundColor: Colors.orange),
+                    );
+                  }
+                },
                 style: FilledButton.styleFrom(
                   backgroundColor: Colors.orange.shade400,
                   shape: RoundedRectangleBorder(
