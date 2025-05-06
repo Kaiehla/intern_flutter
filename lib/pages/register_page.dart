@@ -21,7 +21,7 @@ final TextEditingController _companyController = TextEditingController();
 final TextEditingController _positionController = TextEditingController();
 final TextEditingController _startDateController = TextEditingController();
 final TextEditingController _hoursRequiredController = TextEditingController();
-final shared_preferences_service prefsService = shared_preferences_service();
+final SharedPreferencesService prefsService = SharedPreferencesService();
 
 // Validation states para sa textfields
 String? _selectedPronoun = "He/Him";
@@ -33,6 +33,7 @@ bool _validatePosition = false;
 bool _validateStartDate = false;
 bool _validateHoursRequired = false;
 String internId = "";
+bool _isInternRegistered = false;
 
 class register_page extends StatelessWidget {
   const register_page({super.key});
@@ -196,7 +197,7 @@ class _TextFieldSectionState extends State<TextFieldSection> {
   @override
   void initState() {
     super.initState();
-    getAllInterns();
+    checkInternRegistered();
   }
 
   // validations
@@ -245,9 +246,25 @@ class _TextFieldSectionState extends State<TextFieldSection> {
         'hoursRequired': int.parse(_hoursRequiredController.text),
       }).then((docRef) {
         // Use the document ID from the added document
-        internList.add(internModel(
+        // internList.add(internModel(
+        //   id: docRef.id,
+        //   // Assign the generated document ID
+        //   pronouns: _selectedPronoun!,
+        //   name: _nameController.text,
+        //   birthday: _selectedBirthday!,
+        //   school: _schoolController.text,
+        //   company: _companyController.text,
+        //   position: _positionController.text,
+        //   startDate: _selectedStartDate!,
+        //   hoursRequired: int.parse(_hoursRequiredController.text),
+        // ));
+        // // set the intern id to globals
+        // globals.internId = docRef.id;
+        // print("Intern added successfully with ID: ${docRef.id}");
+
+        // use sharedprefs to store the register intern across all pages after being registered successfully since only 1 intern per device
+        prefsService.saveInternModel(internModel(
           id: docRef.id,
-          // Assign the generated document ID
           pronouns: _selectedPronoun!,
           name: _nameController.text,
           birthday: _selectedBirthday!,
@@ -257,9 +274,8 @@ class _TextFieldSectionState extends State<TextFieldSection> {
           startDate: _selectedStartDate!,
           hoursRequired: int.parse(_hoursRequiredController.text),
         ));
-        // set the intern id to globals
-        globals.internId = docRef.id;
-        print("Intern added successfully with ID: ${docRef.id}");
+        print("Intern saved to SharedPreferences: ${docRef.id}");
+
         //redirect to main
         Navigator.push(
           context,
@@ -406,6 +422,21 @@ class _TextFieldSectionState extends State<TextFieldSection> {
       print("Intern deleted successfully.");
     } catch (e) {
       print("Error deleting intern: $e");
+    }
+  }
+
+  // check if there is an intern already registered to prevent multiple registrations on 1 phone
+  void checkInternRegistered() async {
+    String? internData = await prefsService.getInternData('id');
+    if (internData != null) {
+      setState(() {
+        _isInternRegistered = true;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("An intern is already registered."),
+        ),
+      );
     }
   }
 
@@ -668,34 +699,36 @@ class _TextFieldSectionState extends State<TextFieldSection> {
             ],
           ),
         ),
-        Padding(
-            padding: EdgeInsets.only(top: 10),
-            child: ListView.builder(
-              shrinkWrap: true,
-              itemCount: internList.length,
-              itemBuilder: (context, index) {
-                return ListTile(
-                  title: Text(
-                      '${internList[index].name} (${internList[index].pronouns})',
-                      style: TextStyle(fontWeight: FontWeight.bold)),
-                  subtitle: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(internList[index].birthday.toLocal().toString()),
-                      Text(internList[index].school),
-                      Text(internList[index].company),
-                      Text(internList[index].position),
-                      Text(internList[index].startDate.toLocal().toString()),
-                      Text(internList[index].hoursRequired.toString()),
-                    ],
-                  ),
-                  onTap: () {
-                    // Handle tap to get intern info by document id
-                    getInternInfoById(internList[index].id);
-                  },
-                );
-              },
-            )),
+
+        // List of Interns
+        // Padding(
+        //     padding: EdgeInsets.only(top: 10),
+        //     child: ListView.builder(
+        //       shrinkWrap: true,
+        //       itemCount: internList.length,
+        //       itemBuilder: (context, index) {
+        //         return ListTile(
+        //           title: Text(
+        //               '${internList[index].name} (${internList[index].pronouns})',
+        //               style: TextStyle(fontWeight: FontWeight.bold)),
+        //           subtitle: Column(
+        //             crossAxisAlignment: CrossAxisAlignment.start,
+        //             children: [
+        //               Text(internList[index].birthday.toLocal().toString()),
+        //               Text(internList[index].school),
+        //               Text(internList[index].company),
+        //               Text(internList[index].position),
+        //               Text(internList[index].startDate.toLocal().toString()),
+        //               Text(internList[index].hoursRequired.toString()),
+        //             ],
+        //           ),
+        //           onTap: () {
+        //             // Handle tap to get intern info by document id
+        //             getInternInfoById(internList[index].id);
+        //           },
+        //         );
+        //       },
+        //     )),
 
         SizedBox(height: 16),
 
@@ -706,14 +739,16 @@ class _TextFieldSectionState extends State<TextFieldSection> {
             children: [
               Expanded(
                 child: FilledButton(
-                  onPressed: () {
+                  onPressed: _isInternRegistered
+                      ? null
+                      : () {
                     setState(() {
                       addIntern();
                     });
                   },
                   style: FilledButton.styleFrom(
                     backgroundColor:
-                        Theme.of(context).colorScheme.inversePrimary,
+                        _isInternRegistered ? Colors.grey : Theme.of(context).colorScheme.inversePrimary,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                       side: BorderSide(color: Colors.black, width: 2),
@@ -732,72 +767,72 @@ class _TextFieldSectionState extends State<TextFieldSection> {
                   ),
                 ),
               ),
-              Expanded(
-                child: FilledButton(
-                  onPressed: globals.internId.isEmpty
-                      ? null
-                      : () {
-                          setState(() {
-                            updateInternById(globals.internId);
-                          });
-                        },
-                  style: FilledButton.styleFrom(
-                    backgroundColor: globals.internId.isEmpty
-                        ? Colors.grey
-                        : Theme.of(context).colorScheme.inversePrimary,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      side: BorderSide(color: Colors.black, width: 2),
-                    ),
-                  ),
-                  child: Padding(
-                    padding: EdgeInsets.symmetric(vertical: 12),
-                    child: Text(
-                      "Update",
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.bold,
-                        color: globals.internId.isEmpty
-                            ? Colors.black38
-                            : Theme.of(context).colorScheme.onPrimaryContainer,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-              Expanded(
-                child: FilledButton(
-                  onPressed: globals.internId.isEmpty
-                      ? null
-                      : () {
-                          setState(() {
-                            deleteInternById(globals.internId);
-                          });
-                        },
-                  style: FilledButton.styleFrom(
-                    backgroundColor: globals.internId.isEmpty
-                        ? Colors.grey
-                        : Theme.of(context).colorScheme.inversePrimary,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      side: BorderSide(color: Colors.black, width: 2),
-                    ),
-                  ),
-                  child: Padding(
-                    padding: EdgeInsets.symmetric(vertical: 12),
-                    child: Text(
-                      "Reset",
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.bold,
-                        color: globals.internId.isEmpty
-                            ? Colors.black38
-                            : Theme.of(context).colorScheme.onPrimaryContainer,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
+              // Expanded(
+              //   child: FilledButton(
+              //     onPressed: globals.internId.isEmpty
+              //         ? null
+              //         : () {
+              //             setState(() {
+              //               updateInternById(globals.internId);
+              //             });
+              //           },
+              //     style: FilledButton.styleFrom(
+              //       backgroundColor: globals.internId.isEmpty
+              //           ? Colors.grey
+              //           : Theme.of(context).colorScheme.inversePrimary,
+              //       shape: RoundedRectangleBorder(
+              //         borderRadius: BorderRadius.circular(12),
+              //         side: BorderSide(color: Colors.black, width: 2),
+              //       ),
+              //     ),
+              //     child: Padding(
+              //       padding: EdgeInsets.symmetric(vertical: 12),
+              //       child: Text(
+              //         "Update",
+              //         style: TextStyle(
+              //           fontSize: 14,
+              //           fontWeight: FontWeight.bold,
+              //           color: globals.internId.isEmpty
+              //               ? Colors.black38
+              //               : Theme.of(context).colorScheme.onPrimaryContainer,
+              //         ),
+              //       ),
+              //     ),
+              //   ),
+              // ),
+              // Expanded(
+              //   child: FilledButton(
+              //     onPressed: globals.internId.isEmpty
+              //         ? null
+              //         : () {
+              //             setState(() {
+              //               deleteInternById(globals.internId);
+              //             });
+              //           },
+              //     style: FilledButton.styleFrom(
+              //       backgroundColor: globals.internId.isEmpty
+              //           ? Colors.grey
+              //           : Theme.of(context).colorScheme.inversePrimary,
+              //       shape: RoundedRectangleBorder(
+              //         borderRadius: BorderRadius.circular(12),
+              //         side: BorderSide(color: Colors.black, width: 2),
+              //       ),
+              //     ),
+              //     child: Padding(
+              //       padding: EdgeInsets.symmetric(vertical: 12),
+              //       child: Text(
+              //         "Reset",
+              //         style: TextStyle(
+              //           fontSize: 14,
+              //           fontWeight: FontWeight.bold,
+              //           color: globals.internId.isEmpty
+              //               ? Colors.black38
+              //               : Theme.of(context).colorScheme.onPrimaryContainer,
+              //         ),
+              //       ),
+              //     ),
+              //   ),
+              // ),
             ],
           ),
         ),
