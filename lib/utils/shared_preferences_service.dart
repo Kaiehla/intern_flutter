@@ -22,4 +22,10 @@ Future<void> saveInternModel(internModel intern) async {
     }
     return null;
   }
+
+// Clear sharedprefs
+  Future<void> clearSharedPreferences() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    await prefs.clear();
+  }
 }

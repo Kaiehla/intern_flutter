@@ -38,6 +38,7 @@ dependencies:
   google_fonts: ^6.2.1
   gif: ^2.3.0
   smooth_page_indicator: ^1.2.0+3
+  solar_icons: ^0.0.5
 
 dev_dependencies:
   flutter_test:
