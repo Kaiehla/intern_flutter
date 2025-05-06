@@ -12,11 +12,13 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:intern_flutter/firebase_options.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intern_flutter/utils/globals.dart';
+import 'package:intern_flutter/utils/shared_preferences_service.dart';
 
 //controllers
 final TextEditingController _startDateController = TextEditingController();
 final TextEditingController _endDateController = TextEditingController();
 final TextEditingController _wprNumController = TextEditingController();
+final SharedPreferencesService prefsService = SharedPreferencesService();
 
 //validations
 bool _validateStartDate = false;
@@ -27,6 +29,7 @@ void main() async {
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
+
   // runApp(const MyApp());
   runApp(const register_page());
 }
@@ -206,23 +209,49 @@ class ProgressSection extends StatelessWidget{
                       color: Theme.of(context).colorScheme.primary,
                     ),
                   ),
-                  Text(
-                    globals.internId,
-                    style: TextStyle(
-                      fontSize: 24,
-                      color: Colors.black,
-                      fontStyle: FontStyle.italic,
-                      fontFamily: GoogleFonts.instrumentSerif().fontFamily,
-                    ),
+                 FutureBuilder<String?>(
+                    future: prefsService.getInternData('position'),
+                    builder: (context, snapshot) {
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        return const CircularProgressIndicator(); // Show a loading indicator while waiting
+                      } else if (snapshot.hasError) {
+                        return const Text("Error retrieving position");
+                      } else if (!snapshot.hasData || snapshot.data == null) {
+                        return const Text("No Intern Position found");
+                      } else {
+                        return Text(
+                          snapshot.data!,
+                          style: TextStyle(
+                            fontSize: 24,
+                            color: Colors.black,
+                            fontStyle: FontStyle.italic,
+                            fontFamily: GoogleFonts.instrumentSerif().fontFamily,
+                          ),
+                        );
+                      }
+                    },
                   ),
-                  Text(
-                    "Symph",
-                    style: TextStyle(
-                      fontSize: 18,
-                      color: Colors.black,
-                      fontFamily: GoogleFonts.manrope().fontFamily,
-                    ),
-                  ),
+                  FutureBuilder<String?>(
+                    future: prefsService.getInternData('company'),
+                    builder: (context, snapshot) {
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        return const CircularProgressIndicator(); // Show a loading indicator while waiting
+                      } else if (snapshot.hasError) {
+                        return const Text("Error retrieving company");
+                      } else if (!snapshot.hasData || snapshot.data == null) {
+                        return const Text("No Company found");
+                      } else {
+                        return Text(
+                          snapshot.data!,
+                          style: TextStyle(
+                            fontSize: 18,
+                            color: Colors.black,
+                            fontFamily: GoogleFonts.manrope().fontFamily,
+                          ),
+                        );
+                      }
+                    },
+                  )
                 ],
               ),
             ),
