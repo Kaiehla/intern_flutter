@@ -13,12 +13,16 @@ import 'package:intern_flutter/firebase_options.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intern_flutter/utils/globals.dart';
 import 'package:intern_flutter/utils/shared_preferences_service.dart';
+import 'package:solar_icons/solar_icons.dart';
 
 //controllers
 final TextEditingController _startDateController = TextEditingController();
 final TextEditingController _endDateController = TextEditingController();
 final TextEditingController _wprNumController = TextEditingController();
 final SharedPreferencesService prefsService = SharedPreferencesService();
+
+// navigation bar
+int _selectedIndex = 0;
 
 //validations
 bool _validateStartDate = false;
@@ -48,6 +52,24 @@ class MyApp extends StatelessWidget {
           colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
           useMaterial3: true,
           textTheme: GoogleFonts.manropeTextTheme(),
+          bottomNavigationBarTheme: BottomNavigationBarThemeData(
+            selectedItemColor: Colors.deepPurple, // Label color
+            unselectedItemColor: Colors.black45,
+            selectedIconTheme: IconThemeData(color: const Color(0xFFF3B006)), // Selected icon color
+            unselectedIconTheme: IconThemeData(color: Colors.black45), // Unselected icon color
+            backgroundColor: Colors.white,
+            elevation: 5,
+            showSelectedLabels: true,
+            showUnselectedLabels: true,
+            selectedLabelStyle: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.bold,
+            ),
+            unselectedLabelStyle: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
         ),
         debugShowCheckedModeBanner: false,
         home: const HomeScreen()
@@ -102,7 +124,7 @@ class _DrwListView extends State<DrwListView> {
       child: Column(children: [
         ListTile(
           title: Text("Home"),
-          leading: Icon(Icons.home),
+          leading: Icon(SolarIconsOutline.homeSmile),
           onTap: () => Navigator.push(
               context, MaterialPageRoute(builder: (context) => MyApp())),
         ),
@@ -400,34 +422,55 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  // navigation logic
+  int _selectedIndex = 0;
+
+ final List<Widget> _pages = [
+   Scaffold(
+     appBar: AppBar(
+       title: SizedBox(
+         height: 42,
+         child: Gif(
+           image: AssetImage("logo.gif"),
+           autostart: Autostart.loop,
+         ),
+       ),
+       centerTitle: true,
+     ),
+     body: SingleChildScrollView(
+       child: Padding(
+         padding: const EdgeInsets.symmetric(horizontal: 16),
+         child: Column(
+           children: const [
+             ProgressSection(),
+             WeeklyProgressSection(),
+           ],
+         ),
+       ),
+     ),
+     drawer: Drawer(
+       child: ListView(
+         children: [DrwHeader(), DrwListView()],
+       ),
+     ),
+   ),
+   const add_log_page(),
+   const profile_page(),
+ ];
+
+  void _onItemTapped(int index) {
+    setState(() {
+      _selectedIndex = index;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: SizedBox(
-          height: 42,
-          child: Gif(
-            image: AssetImage("logo.gif"),
-            autostart: Autostart.loop,
-          ),
-        ),
-        centerTitle: true,
-      ),
-      body: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: Column(
-            children: [
-              ProgressSection(),
-              WeeklyProgressSection()
-            ],
-          ),
-        ),
-      ),
-      drawer: Drawer(
-        child: ListView(
-          children: [DrwHeader(), DrwListView()],
-        ),
+      body: _pages[_selectedIndex],
+      bottomNavigationBar: BottomNavBar(
+        currentIndex: _selectedIndex,
+        onTap: _onItemTapped,
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: _openAddWPRDialog,
@@ -703,6 +746,40 @@ class _AddWPRState extends State<AddWPR> {
                 fontWeight: FontWeight.bold,
                 color: Theme.of(context).colorScheme.onPrimaryContainer),
           ),
+        ),
+      ],
+    );
+  }
+}
+
+
+class BottomNavBar extends StatelessWidget {
+  final int currentIndex;
+  final Function(int) onTap;
+
+  const BottomNavBar({
+    Key? key,
+    required this.currentIndex,
+    required this.onTap,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return BottomNavigationBar(
+      currentIndex: currentIndex,
+      onTap: onTap,
+      items: const [
+        BottomNavigationBarItem(
+          icon: Icon(SolarIconsOutline.homeSmile),
+          label: "Home",
+        ),
+        BottomNavigationBarItem(
+          icon: Icon(SolarIconsOutline.documentAdd),
+          label: "WPR",
+        ),
+        BottomNavigationBarItem(
+          icon: Icon(SolarIconsOutline.userCircle),
+          label: "Profile",
         ),
       ],
     );

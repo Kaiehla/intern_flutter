@@ -7,7 +7,6 @@ import 'package:intern_flutter/pages/register_page.dart';
 import 'package:intern_flutter/utils/globals.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-
 //
 class profile_page extends StatefulWidget {
   const profile_page({super.key});
@@ -44,7 +43,6 @@ class _ProfilePageState extends State<profile_page> {
       if (doc.exists) {
         var data = doc.data() as Map<String, dynamic>;
         setState(() {
-
           internData = internModel(
             id: documentId,
             name: data['name'],
@@ -88,159 +86,150 @@ class _ProfilePageState extends State<profile_page> {
           ),
           centerTitle: true,
         ),
-        body: Padding(
-          padding: const EdgeInsets.all(16),
-          child: internData == null
-              ? const Center(child: CircularProgressIndicator())
-              : Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              HeaderSection("My Profile"),
-              InternIDCard(
-                name: internData!.name,
-                birthday:
-                "${internData!.birthday.day}/${internData!.birthday.month}/${internData!.birthday.year}",
-                school: internData!.school,
-                company: internData!.company,
-                position: internData!.position,
-              ),
-              const SizedBox(height: 15),
-
-              // Info Cards
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  InfoCard(
-                    title: "Start Date",
-                    value:
-                    "${internData!.startDate.day}/${internData!.startDate.month}/${internData!.startDate.year}",
-                  ),
-                  const SizedBox(width: 15),
-                  InfoCard(
-                    title: "Hours Required",
-                    value: internData!.hoursRequired.toString(),
-                  ),
-                ],
-              ),
-
-              // General Settings
-              Padding(
-                padding: const EdgeInsets.only(top: 16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      "General",
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
+        body: SingleChildScrollView(
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: internData == null
+                ? const Center(child: CircularProgressIndicator())
+                : Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      HeaderSection("My Profile"),
+                      InternIDCard(
+                        name: internData!.name,
+                        birthday:
+                            "${internData!.birthday.day}/${internData!.birthday.month}/${internData!.birthday.year}",
+                        school: internData!.school,
+                        company: internData!.company,
+                        position: internData!.position,
                       ),
-                    ),
-                    const SizedBox(height: 8),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: const [
-                        Expanded(
-                          child: GeneralCard(
-                            items: [
-                              {
-                                'icon': Icons.badge_outlined,
-                                'text': 'Edit My Intern ID'
-                              },
-                              {
-                                'icon': Icons.calendar_month_rounded,
-                                'text': 'Edit Internship Hours & Start Date'
-                              },
-                              {
-                                'icon': Icons.file_upload_outlined,
-                                'text': 'Export all progress and data'
-                              },
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
+                      const SizedBox(height: 15),
 
-              // Settings
-              Padding(
-                padding: const EdgeInsets.only(top: 16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      "Settings",
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
+                      // Info Cards
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          InfoCard(
+                            title: "Start Date",
+                            value:
+                                "${internData!.startDate.day}/${internData!.startDate.month}/${internData!.startDate.year}",
+                          ),
+                          const SizedBox(width: 15),
+                          InfoCard(
+                            title: "Hours Required",
+                            value: internData!.hoursRequired.toString(),
+                          ),
+                        ],
                       ),
-                    ),
-                    const SizedBox(height: 8),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: const [
-                        Expanded(
-                          child: SettingsCard(
-                            items: [
-                              {
-                                'icon': Icons.warning_amber_rounded,
-                                'text': 'Erase all my progress and data'
-                              },
-                              {
-                                'icon': Icons.bug_report_outlined,
-                                'text': 'Report a problem'
-                              },
-                              {
-                                'icon': Icons.fact_check_outlined,
-                                'text': 'Terms and Conditions'
-                              },
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
 
-              const Spacer(),
-              SizedBox(
-                width: double.infinity,
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: FilledButton(
-                        onPressed: () => Navigator.push(
+                      // General Settings
+                      const SizedBox(height: 16),
+                      const Text(
+                        "General",
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: const [
+                          Expanded(
+                            child: GeneralCard(
+                              items: [
+                                {
+                                  'icon': Icons.badge_outlined,
+                                  'text': 'Edit My Intern ID',
+                                  'onTap': null,
+                                },
+                                {
+                                  'icon': Icons.calendar_month_rounded,
+                                  'text': 'Edit Internship Hours & Start Date',
+                                  'onTap': null,
+                                },
+                                {
+                                  'icon': Icons.file_upload_outlined,
+                                  'text': 'Export all progress and data',
+                                  'onTap': null,
+                                },
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+
+                      // Settings
+                      const SizedBox(height: 16),
+                      const Text(
+                        "Settings",
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Expanded(
+                            child: SettingsCard(
+                              items: [
+                                {
+                                  'icon': Icons.warning_amber_rounded,
+                                  'text': 'Erase all my progress and data',
+                                  'onTap': () {
+                                    EraseDataDialog.showEraseDataDialog(
+                                        context);
+                                  },
+                                },
+                                {
+                                  'icon': Icons.bug_report_outlined,
+                                  'text': 'Report a problem',
+                                  'onTap': null,
+                                },
+                                {
+                                  'icon': Icons.fact_check_outlined,
+                                  'text': 'Terms and Conditions',
+                                  'onTap': null,
+                                },
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+
+                      const SizedBox(height: 16),
+                      SizedBox(
+                        width: double.infinity,
+                        child: FilledButton(
+                          onPressed: () => Navigator.push(
                             context,
-                            MaterialPageRoute(
-                                builder: (context) => MyApp())),
-                        style: FilledButton.styleFrom(
-                          backgroundColor: Theme.of(context)
-                              .colorScheme
-                              .inversePrimary,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            side: const BorderSide(
-                                color: Colors.black, width: 2),
+                            MaterialPageRoute(builder: (context) => MyApp()),
                           ),
-                        ),
-                        child: const Padding(
-                          padding: EdgeInsets.symmetric(vertical: 12),
-                          child: Text(
-                            "Back to Home",
-                            style: TextStyle(
+                          style: FilledButton.styleFrom(
+                            backgroundColor:
+                                Theme.of(context).colorScheme.inversePrimary,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              side: const BorderSide(
+                                  color: Colors.black, width: 2),
+                            ),
+                          ),
+                          child: const Padding(
+                            padding: EdgeInsets.symmetric(vertical: 12),
+                            child: Text(
+                              "Back to Home",
+                              style: TextStyle(
                                 fontSize: 14,
-                                fontWeight: FontWeight.bold),
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
                           ),
                         ),
                       ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
+                    ],
+                  ),
           ),
         ),
         drawer: Drawer(
@@ -252,7 +241,6 @@ class _ProfilePageState extends State<profile_page> {
     );
   }
 }
-
 
 //GENERAL CARD
 class GeneralCard extends StatelessWidget {
@@ -274,22 +262,25 @@ class GeneralCard extends StatelessWidget {
         children: items.map((item) {
           return Column(
             children: [
-              Row(
-                children: [
-                  Icon(
-                    item['icon'],
-                    size: 18,
-                    color: Colors.black,
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    item['text'],
-                    style: const TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.normal,
+              GestureDetector(
+                onTap: item['onTap'], // Call the onTap function
+                child: Row(
+                  children: [
+                    Icon(
+                      item['icon'],
+                      size: 18,
+                      color: Colors.black,
                     ),
-                  ),
-                ],
+                    const SizedBox(width: 8),
+                    Text(
+                      item['text'],
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.normal,
+                      ),
+                    ),
+                  ],
+                ),
               ),
               if (item != items.last)
                 const Padding(
@@ -326,22 +317,25 @@ class SettingsCard extends StatelessWidget {
         children: items.map((item) {
           return Column(
             children: [
-              Row(
-                children: [
-                  Icon(
-                    item['icon'],
-                    size: 18,
-                    color: Colors.black,
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    item['text'],
-                    style: const TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.normal,
+              GestureDetector(
+                onTap: item['onTap'], // Call the onTap function
+                child: Row(
+                  children: [
+                    Icon(
+                      item['icon'],
+                      size: 18,
+                      color: Colors.black,
                     ),
-                  ),
-                ],
+                    const SizedBox(width: 8),
+                    Text(
+                      item['text'],
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.normal,
+                      ),
+                    ),
+                  ],
+                ),
               ),
               if (item != items.last)
                 const Padding(
@@ -363,7 +357,7 @@ class InfoCard extends StatelessWidget {
   final String title;
   final String value;
 
-   const InfoCard({
+  const InfoCard({
     required this.title,
     required this.value,
     super.key,
@@ -380,7 +374,8 @@ class InfoCard extends StatelessWidget {
           border: Border.all(color: Colors.black, width: 2), // Black border
         ),
         child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween, // Space between text
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          // Space between text
           children: [
             Text(
               title,
@@ -459,6 +454,56 @@ class DottedLine extends StatelessWidget {
           }),
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           direction: Axis.horizontal,
+        );
+      },
+    );
+  }
+}
+
+class EraseDataDialog {
+  static void showEraseDataDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text("Are you sure?"),
+          content: const Text("This will erase all your progress and data."),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop(); // Close the dialog
+              },
+              child: const Text("Cancel"),
+            ),
+            TextButton(
+              onPressed: () async {
+                try {
+                  await prefsService
+                      .clearSharedPreferences(); // Clear all shared preferences
+                  Navigator.pushAndRemoveUntil(
+                    context,
+                    MaterialPageRoute(builder: (context) => const register_page()),
+                    (route) => false, // Remove all previous routes
+                  );
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text("All progress and data erased."),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
+                } catch (e) {
+                  Navigator.of(context).pop(); // Close the dialog
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text("Failed to erase data: $e"),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
+                }
+              },
+              child: const Text("Yes"),
+            ),
+          ],
         );
       },
     );
