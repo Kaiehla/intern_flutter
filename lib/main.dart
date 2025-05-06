@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intern_flutter/models/wprModel.dart';
 import 'package:intern_flutter/pages/add_log_page.dart';
+import 'package:intern_flutter/pages/profile_page.dart';
 import 'package:intern_flutter/pages/register_page.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intern_flutter/pages/weekly_tasks_page.dart';
