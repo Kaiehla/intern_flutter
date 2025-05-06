@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:intern_flutter/main.dart';
 import 'package:intern_flutter/models/internModel.dart';
-import 'package:intern_flutter/pages/register_page.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:gif/gif.dart';
+import 'package:intern_flutter/pages/register_page.dart';
 import 'package:intern_flutter/utils/globals.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
@@ -22,7 +22,16 @@ class _ProfilePageState extends State<profile_page> {
   @override
   void initState() {
     super.initState();
-    getInternInfoById(globals.internId);
+    fetchInternData();
+  }
+
+  void fetchInternData() async {
+    String? internId = await prefsService.getInternData('id');
+    if (internId != null) {
+      getInternInfoById(internId);
+    } else {
+      print("No intern ID found.");
+    }
   }
 
   void getInternInfoById(String documentId) async {

@@ -21,7 +21,6 @@ final TextEditingController _companyController = TextEditingController();
 final TextEditingController _positionController = TextEditingController();
 final TextEditingController _startDateController = TextEditingController();
 final TextEditingController _hoursRequiredController = TextEditingController();
-final SharedPreferencesService prefsService = SharedPreferencesService();
 
 // Validation states para sa textfields
 String? _selectedPronoun = "He/Him";
