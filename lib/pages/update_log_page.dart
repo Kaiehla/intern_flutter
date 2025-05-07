@@ -78,7 +78,13 @@ class _AddLogPageState extends State<update_log_page> {
                     children: [
                       HeaderSection(),
                       TextFieldSection(),
-                      ButtonFieldSection(logId: widget.logId),
+                      ButtonFieldSection(
+                        logId: widget.logId,
+                        task: _taskController.text,
+                        date: _dateController.text,
+                        hours: _hoursController.text,
+                        description: _descriptionController.text,
+                      ),
                     ],
                   ),
                 ),
@@ -430,112 +436,21 @@ class DottedLine extends StatelessWidget {
 
 class ButtonFieldSection extends StatelessWidget {
   final String? logId;
-  const ButtonFieldSection({super.key, this.logId});
+  final String? task;
+  final String? date;
+  final String? hours;
+  final String? description;
+  // const ButtonFieldSection({super.key, this.logId});
 
-  void addLogToFirestore(BuildContext context) async {
-    // Validate all fields
-    _validateTask = _taskController.text.isEmpty;
-    _validateDate = _dateController.text.isEmpty;
-    _validateHours = _hoursController.text.isEmpty;
-    _validateDescription = _descriptionController.text.isEmpty;
 
-    if (!_validateTask && !_validateDate && !_validateHours && !_validateDescription) {
-      try {
-        await FirebaseFirestore.instance.collection('progress_logs').add({
-          'task': _taskController.text,
-          'date': _dateController.text,
-          'hours': int.parse(_hoursController.text),
-          'description': _descriptionController.text,
-          'created_at': FieldValue.serverTimestamp(),
-        });
-
-        // If the above succeeds, show a success message
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Added progress log successfully!"),
-            backgroundColor: Colors.green,),
-        );
-
-        // xlear fields after successful submission
-        _taskController.clear();
-        _dateController.clear();
-        _hoursController.clear();
-        _descriptionController.clear();
-
-        // waits for snackbar alert to appear before reddirectng
-        await Future.delayed(Duration(seconds: 2));
-
-        // eto para mapunta sa home after submitting kaso ewan ko Navigate to the homepage after success
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => MyApp()),
-        );
-      } catch (error) {
-        // If an error occurs, show an error message
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Failed to add log. Please try again.")),
-        );
-      }
-    } else {
-      // Trigger a rebuild of validation flags
-      (context as Element).markNeedsBuild();
-    }
-  }
-
-  // update
-  // void updateLog(BuildContext context) async {
-  //   if (!_validateTask && !_validateDate && !_validateHours && !_validateDescription) {
-  //     try {
-  //       final querySnapshot = await FirebaseFirestore.instance
-  //           .collection('progress_logs')
-  //           .where('task', isEqualTo: _taskController.text)
-  //           .get();
-  //
-  //       if (querySnapshot.docs.isNotEmpty) {
-  //         int? hours = int.tryParse(_hoursController.text);
-  //         if (hours == null) {
-  //           ScaffoldMessenger.of(context).showSnackBar(
-  //             SnackBar(content: Text("Hours must be a valid number."), backgroundColor: Colors.red),
-  //           );
-  //           return;
-  //         }
-  //
-  //         for (var doc in querySnapshot.docs) {
-  //           print("Updating document ID: ${doc.id}");
-  //           await FirebaseFirestore.instance
-  //               .collection('progress_logs')
-  //               .doc(doc.id)
-  //               .update({
-  //             'date': _dateController.text,
-  //             'hours': hours,
-  //             'description': _descriptionController.text,
-  //             'updated_at': FieldValue.serverTimestamp(),
-  //           });
-  //         }
-  //
-  //         ScaffoldMessenger.of(context).showSnackBar(
-  //           SnackBar(content: Text("Progress log updated successfully!"),
-  //               backgroundColor: Colors.orangeAccent),
-  //         );
-  //
-  //       } else {
-  //         print("No matching document found for task: ${_taskController.text}");
-  //         ScaffoldMessenger.of(context).showSnackBar(
-  //           SnackBar(content: Text("No matching log found to update."),
-  //               backgroundColor: Colors.grey),
-  //         );
-  //       }
-  //     } catch (error) {
-  //       print("Update failed: $error");
-  //       ScaffoldMessenger.of(context).showSnackBar(
-  //         SnackBar(content: Text("Failed to update log: $error"),
-  //             backgroundColor: Colors.red),
-  //       );
-  //     }
-  //   } else {
-  //     (context as Element).markNeedsBuild();
-  //   }
-  // }
-
+  const ButtonFieldSection({
+    super.key,
+    this.logId,
+    this.task,
+    this.date,
+    this.hours,
+    this.description,
+  });
 
   void updateLog(BuildContext context, String? logId) async {
     if (logId == null) {
@@ -545,113 +460,73 @@ class ButtonFieldSection extends StatelessWidget {
       return;
     }
 
-    // Debug log
-    print("Updating log with ID: $logId");
-    print("Task: ${_taskController.text}, Date: ${_dateController.text}, Hours: ${_hoursController.text}, Description: ${_descriptionController.text}");
-
-    // Validate fields
-    _validateTask = _taskController.text.isEmpty;
-    _validateDate = _dateController.text.isEmpty;
-    _validateHours = _hoursController.text.isEmpty;
-    _validateDescription = _descriptionController.text.isEmpty;
-
-    if (!_validateTask && !_validateDate && !_validateHours && !_validateDescription) {
-      try {
-        int? hours = int.tryParse(_hoursController.text);
-        if (hours == null) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text("Hours must be a valid number."), backgroundColor: Colors.red),
-          );
-          return;
-        }
-
-        await FirebaseFirestore.instance
-            .collection('progress_logs')
-            .doc(logId)
-            .update({
-          'task': _taskController.text,
-          'date': _dateController.text,
-          'hours': hours,
-          'description': _descriptionController.text,
-          'updated_at': FieldValue.serverTimestamp(),
-        });
-
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Progress log updated successfully!"), backgroundColor: Colors.orangeAccent),
-        );
-
-        // waits for snackbar alert to appear before reddirectng
-        await Future.delayed(Duration(seconds: 2));
-
-        // Clear fields after successful update
-        _taskController.clear();
-        _dateController.clear();
-        _hoursController.clear();
-        _descriptionController.clear();
-
-        // eto para mapunta sa home after submitting kaso ewan ko Navigate to the homepage after success
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => MyApp()),
-        );
-
-      } catch (error) {
-        print("Update failed: $error");
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Failed to update log: $error"), backgroundColor: Colors.red),
-        );
-      }
+    // Check if any changes have been made
+    if (_taskController.text.trim() == (task ?? '').trim() &&
+        _dateController.text.trim() == (date ?? '').trim() &&
+        _hoursController.text.trim() == (hours ?? '').trim() &&
+        _descriptionController.text.trim() == (description ?? '').trim()) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("No changes have been made."), backgroundColor: Colors.orange),
+      );
     } else {
-      (context as Element).markNeedsBuild();
-    }
-  }
+      // Validate fields
+      _validateTask = _taskController.text.isEmpty;
+      _validateDate = _dateController.text.isEmpty;
+      _validateHours = _hoursController.text.isEmpty;
+      _validateDescription = _descriptionController.text.isEmpty;
 
-  // delete
-  void deleteLog(BuildContext context) async {
-    try {
-      final querySnapshot = await FirebaseFirestore.instance
-          .collection('progress_logs')
-          .where('task', isEqualTo: _taskController.text)
-          .get();
+      if (!_validateTask && !_validateDate && !_validateHours && !_validateDescription) {
+        try {
+          int? hours = int.tryParse(_hoursController.text);
+          if (hours == null) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text("Hours must be a valid number."), backgroundColor: Colors.red),
+            );
+            return;
+          }
 
-      if (querySnapshot.docs.isNotEmpty) {
-        for (var doc in querySnapshot.docs) {
           await FirebaseFirestore.instance
               .collection('progress_logs')
-              .doc(doc.id)
-              .delete();
+              .doc(logId)
+              .update({
+            'task': _taskController.text,
+            'date': _dateController.text,
+            'hours': hours,
+            'description': _descriptionController.text,
+            'updated_at': FieldValue.serverTimestamp(),
+          });
+
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text("Progress log updated successfully!"), backgroundColor: Colors.orangeAccent),
+          );
+
+          // Wait for snackbar alert to appear before redirecting
+          await Future.delayed(Duration(seconds: 2));
+
+          // Clear fields after successful update
+          _taskController.clear();
+          _dateController.clear();
+          _hoursController.clear();
+          _descriptionController.clear();
+
+          // Navigate to the homepage after success
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => MyApp()),
+          );
+        } catch (error) {
+          print("Update failed: $error");
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text("Failed to update log: $error"), backgroundColor: Colors.red),
+          );
         }
-
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text("Progress log deleted successfully."),
-            backgroundColor: Colors.red,
-          ),
-        );
-
-        _taskController.clear();
-        _dateController.clear();
-        _hoursController.clear();
-        _descriptionController.clear();
-
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text("No matching log found to delete."),
-            backgroundColor: Colors.orange,
-          ),
-        );
+        (context as Element).markNeedsBuild();
       }
-    } catch (e) {
-      print("Failed to delete log: $e");
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text("Failed to delete log."),
-          backgroundColor: Colors.red,
-        ),
-      );
     }
   }
+
+
 
   @override
   Widget build(BuildContext context) {
