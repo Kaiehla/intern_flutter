@@ -6,6 +6,9 @@ import 'package:gif/gif.dart';
 import 'package:intern_flutter/pages/register_page.dart';
 import 'package:intern_flutter/utils/globals.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/services.dart';
+import 'package:intern_flutter/utils/validations.dart';
+
 
 class profile_page extends StatefulWidget {
   const profile_page({super.key});
@@ -75,6 +78,8 @@ class _ProfilePageState extends State<profile_page> {
     final positionController = TextEditingController(text: internData!.position);
     DateTime selectedBirthday = birthday;
 
+    final _formKey = GlobalKey<FormState>();
+
     showDialog(
       context: context,
       builder: (context) {
@@ -86,70 +91,134 @@ class _ProfilePageState extends State<profile_page> {
               child: StatefulBuilder(
                 builder: (context, setState) {
                   return SingleChildScrollView(
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        TextField(
-                          controller: nameController,
-                          decoration: const InputDecoration(
-                            labelText: 'Name',
-                            border: OutlineInputBorder(),
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-                        GestureDetector(
-                          onTap: () async {
-                            final picked = await showDatePicker(
-                              context: context,
-                              initialDate: selectedBirthday,
-                              firstDate: DateTime(1950),
-                              lastDate: DateTime(2100),
-                            );
-                            if (picked != null) {
-                              setState(() => selectedBirthday = picked);
-                            }
-                          },
-                          child: InputDecorator(
+                    child: Form(
+                      key: _formKey,
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          // Name
+                          TextFormField(
+                            controller: nameController,
+                            maxLength: 25,
                             decoration: const InputDecoration(
-                              labelText: 'Birthday',
+                              labelText: 'Name',
                               border: OutlineInputBorder(),
                             ),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Text(
-                                  "${selectedBirthday.month}/${selectedBirthday.day}/${selectedBirthday.year}",
-                                ),
-                                const Icon(Icons.calendar_today, size: 16),
-                              ],
+                            inputFormatters: <TextInputFormatter>[
+                              LengthLimitingTextInputFormatter(50),
+                              ...Validations.strictDenyPatterns.map((pattern) =>
+                                  FilteringTextInputFormatter.deny(RegExp(pattern))),
+                              // Apply deny filters
+                            ],
+                            validator: (value) {
+                              if (value == null || value.trim().isEmpty) {
+                                return 'Name is required';
+                              }
+                              return null;
+                            },
+                          ),
+                          const SizedBox(height: 12),
+
+                          // Birthday
+                          GestureDetector(
+                            onTap: () async {
+                              final picked = await showDatePicker(
+                                context: context,
+                                initialDate: selectedBirthday,
+                                firstDate: DateTime(1950),
+                                lastDate: DateTime.now().subtract(const Duration(days: 16 * 365)),
+                              );
+                              if (picked != null) {
+                                setState(() => selectedBirthday = picked);
+                              }
+                            },
+                            child: InputDecorator(
+                              decoration: const InputDecoration(
+                                labelText: 'Birthday',
+                                border: OutlineInputBorder(),
+                              ),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text(
+                                    "${selectedBirthday.month}/${selectedBirthday.day}/${selectedBirthday.year}",
+                                  ),
+                                  const Icon(Icons.calendar_today, size: 16),
+                                ],
+                              ),
                             ),
                           ),
-                        ),
-                        const SizedBox(height: 12),
-                        TextField(
-                          controller: schoolController,
-                          decoration: const InputDecoration(
-                            labelText: 'School',
-                            border: OutlineInputBorder(),
+                          const SizedBox(height: 12),
+
+                          // School
+                          TextFormField(
+                            controller: schoolController,
+                            maxLength: 30,
+                            decoration: const InputDecoration(
+                              labelText: 'School',
+                              border: OutlineInputBorder(),
+                            ),
+                            inputFormatters: <TextInputFormatter>[
+                              LengthLimitingTextInputFormatter(30),
+                              ...Validations.generalNoNumbersDenyPatterns.map((pattern) =>
+                                  FilteringTextInputFormatter.deny(RegExp(pattern))),
+                              // Apply deny filters
+                            ],
+                            validator: (value) {
+                              if (value == null || value.trim().isEmpty) {
+                                return 'School is required';
+                              }
+                              return null;
+                            },
                           ),
-                        ),
-                        const SizedBox(height: 12),
-                        TextField(
-                          controller: companyController,
-                          decoration: const InputDecoration(
-                            labelText: 'Company',
-                            border: OutlineInputBorder(),
+                          const SizedBox(height: 12),
+
+                          // Company
+                          TextFormField(
+                            controller: companyController,
+                            maxLength: 30,
+                            decoration: const InputDecoration(
+                              labelText: 'Company',
+                              border: OutlineInputBorder(),
+                            ),
+                            inputFormatters: <TextInputFormatter>[
+                              LengthLimitingTextInputFormatter(30),
+                              ...Validations.generalDenyPatterns.map((pattern) =>
+                                  FilteringTextInputFormatter.deny(RegExp(pattern))),
+                              // Apply deny filters
+                            ],
+                            validator: (value) {
+                              if (value == null || value.trim().isEmpty) {
+                                return 'Company is required';
+                              }
+                              return null;
+                            },
                           ),
-                        ),
-                        const SizedBox(height: 12),
-                        TextField(
-                          controller: positionController,
-                          decoration: const InputDecoration(
-                            labelText: 'Position',
-                            border: OutlineInputBorder(),
+                          const SizedBox(height: 12),
+
+                          // Position
+                          TextFormField(
+                            controller: positionController,
+                            maxLength: 30,
+                            decoration: const InputDecoration(
+                              labelText: 'Position',
+                              border: OutlineInputBorder(),
+                            ),
+                            inputFormatters: <TextInputFormatter>[
+                              LengthLimitingTextInputFormatter(30),
+                              ...Validations.generalDenyPatterns.map((pattern) =>
+                                  FilteringTextInputFormatter.deny(RegExp(pattern))),
+                              // Apply deny filters
+                            ],
+                            validator: (value) {
+                              if (value == null || value.trim().isEmpty) {
+                                return 'Position is required';
+                              }
+                              return null;
+                            },
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                   );
                 },
@@ -162,37 +231,39 @@ class _ProfilePageState extends State<profile_page> {
               ),
               TextButton(
                 onPressed: () async {
-                  try {
-                    await FirebaseFirestore.instance
-                        .collection('interns')
-                        .doc(internData!.id)
-                        .update({
-                      'name': nameController.text.trim(),
-                      'birthday': Timestamp.fromDate(selectedBirthday),
-                      'school': schoolController.text.trim(),
-                      'company': companyController.text.trim(),
-                      'position': positionController.text.trim(),
-                    });
+                  if (_formKey.currentState!.validate()) {
+                    try {
+                      await FirebaseFirestore.instance
+                          .collection('interns')
+                          .doc(internData!.id)
+                          .update({
+                        'name': nameController.text.trim(),
+                        'birthday': Timestamp.fromDate(selectedBirthday),
+                        'school': schoolController.text.trim(),
+                        'company': companyController.text.trim(),
+                        'position': positionController.text.trim(),
+                      });
 
-                    setState(() {
-                      internData = internData!.copyWith(
-                        name: nameController.text.trim(),
-                        birthday: selectedBirthday,
-                        school: schoolController.text.trim(),
-                        company: companyController.text.trim(),
-                        position: positionController.text.trim(),
+                      setState(() {
+                        internData = internData!.copyWith(
+                          name: nameController.text.trim(),
+                          birthday: selectedBirthday,
+                          school: schoolController.text.trim(),
+                          company: companyController.text.trim(),
+                          position: positionController.text.trim(),
+                        );
+                      });
+
+                      Navigator.pop(context);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text("Details updated.")),
                       );
-                    });
-
-                    Navigator.pop(context);
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text("Details updated.")),
-                    );
-                  } catch (e) {
-                    Navigator.pop(context);
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text("Failed to update.")),
-                    );
+                    } catch (e) {
+                      Navigator.pop(context);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text("Failed to update.")),
+                      );
+                    }
                   }
                 },
                 style: FilledButton.styleFrom(
