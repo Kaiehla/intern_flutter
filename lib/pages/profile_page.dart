@@ -64,6 +64,364 @@ class _ProfilePageState extends State<profile_page> {
     }
   }
 
+  //edit intern id
+  void editInternID() {
+    if (internData == null) return;
+
+    final nameController = TextEditingController(text: internData!.name);
+    final birthday = internData!.birthday;
+    final schoolController = TextEditingController(text: internData!.school);
+    final companyController = TextEditingController(text: internData!.company);
+    final positionController = TextEditingController(text: internData!.position);
+    DateTime selectedBirthday = birthday;
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return Center(
+          child: AlertDialog(
+            title: const Text('Edit Intern ID'),
+            content: SizedBox(
+              width: 400,
+              child: StatefulBuilder(
+                builder: (context, setState) {
+                  return SingleChildScrollView(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        TextField(
+                          controller: nameController,
+                          decoration: const InputDecoration(
+                            labelText: 'Name',
+                            border: OutlineInputBorder(),
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        GestureDetector(
+                          onTap: () async {
+                            final picked = await showDatePicker(
+                              context: context,
+                              initialDate: selectedBirthday,
+                              firstDate: DateTime(1950),
+                              lastDate: DateTime(2100),
+                            );
+                            if (picked != null) {
+                              setState(() => selectedBirthday = picked);
+                            }
+                          },
+                          child: InputDecorator(
+                            decoration: const InputDecoration(
+                              labelText: 'Birthday',
+                              border: OutlineInputBorder(),
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text(
+                                  "${selectedBirthday.month}/${selectedBirthday.day}/${selectedBirthday.year}",
+                                ),
+                                const Icon(Icons.calendar_today, size: 16),
+                              ],
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        TextField(
+                          controller: schoolController,
+                          decoration: const InputDecoration(
+                            labelText: 'School',
+                            border: OutlineInputBorder(),
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        TextField(
+                          controller: companyController,
+                          decoration: const InputDecoration(
+                            labelText: 'Company',
+                            border: OutlineInputBorder(),
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        TextField(
+                          controller: positionController,
+                          decoration: const InputDecoration(
+                            labelText: 'Position',
+                            border: OutlineInputBorder(),
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                },
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Cancel'),
+              ),
+              TextButton(
+                onPressed: () async {
+                  try {
+                    await FirebaseFirestore.instance
+                        .collection('interns')
+                        .doc(internData!.id)
+                        .update({
+                      'name': nameController.text.trim(),
+                      'birthday': Timestamp.fromDate(selectedBirthday),
+                      'school': schoolController.text.trim(),
+                      'company': companyController.text.trim(),
+                      'position': positionController.text.trim(),
+                    });
+
+                    setState(() {
+                      internData = internData!.copyWith(
+                        name: nameController.text.trim(),
+                        birthday: selectedBirthday,
+                        school: schoolController.text.trim(),
+                        company: companyController.text.trim(),
+                        position: positionController.text.trim(),
+                      );
+                    });
+
+                    Navigator.pop(context);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text("Details updated.")),
+                    );
+                  } catch (e) {
+                    Navigator.pop(context);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text("Failed to update.")),
+                    );
+                  }
+                },
+                style: FilledButton.styleFrom(
+                  backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+                ),
+                child: const Text(
+                  'Save',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black,
+                  ),
+                ),
+              ),
+            ],
+            insetPadding: const EdgeInsets.symmetric(horizontal: 24.0),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  //edit internship hours
+  void editInternHours() {
+    if (internData == null) return;
+
+    TextEditingController hoursController = TextEditingController(
+      text: internData!.hoursRequired.toString(),
+    );
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return Center(
+          child: AlertDialog(
+            title: const Text('Edit Internship Hours'),
+            content: SizedBox(
+              width: 400,
+              child: StatefulBuilder(
+                builder: (context, setState) {
+                  return Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      TextField(
+                        controller: hoursController,
+                        keyboardType: TextInputType.number,
+                        decoration: const InputDecoration(
+                          labelText: 'Hours Required',
+                          border: OutlineInputBorder(),
+                        ),
+                      ),
+                    ],
+                  );
+                },
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Cancel'),
+              ),
+              TextButton(
+                onPressed: () async {
+                  final String newHoursStr = hoursController.text.trim();
+                  final int? newHours = int.tryParse(newHoursStr);
+
+                  if (newHours != null && internData != null) {
+                    try {
+                      await FirebaseFirestore.instance
+                          .collection('interns')
+                          .doc(internData!.id)
+                          .update({
+                        'hoursRequired': newHours,
+                      });
+
+                      setState(() {
+                        internData = internData!.copyWith(
+                          hoursRequired: newHours,
+                        );
+                      });
+
+                      Navigator.pop(context);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text("Details updated.")),
+                      );
+                    } catch (e) {
+                      Navigator.pop(context);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text("Failed to update.")),
+                      );
+                    }
+                  } else {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text("Please enter valid hours.")),
+                    );
+                  }
+                },
+                style: FilledButton.styleFrom(
+                  backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+                ),
+                child: const Text(
+                  'Save',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black,
+                  ),
+                ),
+              ),
+            ],
+            insetPadding: const EdgeInsets.symmetric(horizontal: 24.0),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  //edit start date
+  void editInternStartDate() {
+    if (internData == null) return;
+
+    DateTime selectedStartDate = internData!.startDate;
+    final _startDateController = TextEditingController(
+      text: "${selectedStartDate.day}/${selectedStartDate.month}/${selectedStartDate.year}",
+    );
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return Center(
+          child: AlertDialog(
+            title: const Text('Edit Internship Start Date'),
+            content: SizedBox(
+              width: 400,
+              child: Padding(
+                padding: const EdgeInsets.only(top: 8),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: TextField(
+                        readOnly: true,
+                        controller: _startDateController,
+                        decoration: InputDecoration(
+                          labelText: "Start Date",
+                          hintText: "dd/mm/yyyy",
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          suffixIcon: IconButton(
+                            icon: const Icon(Icons.today),
+                            onPressed: () async {
+                              DateTime? pickedDate = await showDatePicker(
+                                context: context,
+                                initialDate: selectedStartDate,
+                                firstDate: DateTime(2000),
+                                lastDate: DateTime(2100),
+                              );
+                              if (pickedDate != null) {
+                                selectedStartDate = pickedDate;
+                                _startDateController.text =
+                                "${pickedDate.day}/${pickedDate.month}/${pickedDate.year}";
+                              }
+                            },
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Cancel'),
+              ),
+              TextButton(
+                onPressed: () async {
+                  if (internData != null) {
+                    try {
+                      await FirebaseFirestore.instance
+                          .collection('interns')
+                          .doc(internData!.id)
+                          .update({
+                        'startDate': Timestamp.fromDate(selectedStartDate),
+                      });
+
+                      setState(() {
+                        internData = internData!.copyWith(
+                          startDate: selectedStartDate,
+                        );
+                      });
+
+                      Navigator.pop(context);
+                    } catch (e) {
+                      Navigator.pop(context);
+                    }
+                  }
+                },
+                style: FilledButton.styleFrom(
+                  backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+                ),
+                child: const Text(
+                  'Save',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black,
+                  ),
+                ),
+              ),
+            ],
+            insetPadding: const EdgeInsets.symmetric(horizontal: 24.0),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  //show report a problem
   void showReportAProblem() {
     final screenHeight = MediaQuery.of(context).size.height;
     final dialogHeight = screenHeight * 0.6;
@@ -301,24 +659,24 @@ class _ProfilePageState extends State<profile_page> {
                 const SizedBox(height: 8),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
-                  children: const [
+                  children: [
                     Expanded(
                       child: GeneralCard(
                         items: [
                           {
                             'icon': Icons.badge_outlined,
                             'text': 'Edit My Intern ID',
-                            'onTap': null,
+                            'onTap': () => editInternID(),
+                          },
+                          {
+                            'icon': Icons.timelapse_rounded,
+                            'text': 'Edit Internship Hours',
+                            'onTap': () => editInternHours(),
                           },
                           {
                             'icon': Icons.calendar_month_rounded,
-                            'text': 'Edit Internship Hours & Start Date',
-                            'onTap': null,
-                          },
-                          {
-                            'icon': Icons.file_upload_outlined,
-                            'text': 'Export all progress and data',
-                            'onTap': null,
+                            'text': 'Edit Internship Start Date',
+                            'onTap': () => editInternStartDate(),
                           },
                         ],
                       ),

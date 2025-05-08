@@ -48,4 +48,28 @@ class internModel {
       hoursRequired: json['hoursRequired'],
     );
   }
+
+  internModel copyWith({
+    String? id,
+    String? pronouns,
+    String? name,
+    DateTime? birthday,
+    String? school,
+    String? company,
+    String? position,
+    DateTime? startDate,
+    int? hoursRequired,
+  }) {
+    return internModel(
+      id: id ?? this.id,
+      pronouns: pronouns ?? this.pronouns,
+      name: name ?? this.name,
+      birthday: birthday ?? this.birthday,
+      school: school ?? this.school,
+      company: company ?? this.company,
+      position: position ?? this.position,
+      startDate: startDate ?? this.startDate,
+      hoursRequired: hoursRequired ?? this.hoursRequired,
+    );
+  }
 }
