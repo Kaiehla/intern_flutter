@@ -17,6 +17,7 @@ import 'package:intern_flutter/utils/globals.dart';
 import 'package:intern_flutter/utils/shared_preferences_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:solar_icons/solar_icons.dart';
+import 'package:intl/intl.dart';
 
 //controllers
 final TextEditingController _startDateController = TextEditingController();
@@ -24,13 +25,13 @@ final TextEditingController _endDateController = TextEditingController();
 final TextEditingController _wprNumController = TextEditingController();
 final SharedPreferencesService prefsService = SharedPreferencesService();
 
-// navigation bar
-int _selectedIndex = 0;
-
 //validations
 bool _validateStartDate = false;
 bool _validateEndDate = false;
 bool _validateWprNum = false;
+
+// navigation bar
+int _selectedIndex = 0;
 
 void main() async {
   await Firebase.initializeApp(
@@ -538,119 +539,204 @@ class ProgressSection extends StatelessWidget {
 class WeeklyProgressSection extends StatelessWidget{
   const WeeklyProgressSection({super.key});
 
+  Future<String?> _getInternId() async {
+    SharedPreferencesService prefsService = SharedPreferencesService();
+    String? internId = await prefsService.getInternData('id');
+    if (internId == null || internId.isEmpty) {
+      throw Exception("Intern ID not found in shared preferences.");
+    }
+    return internId;
+  }
+
   @override
-  Widget build(BuildContext context){
-    return Padding(padding: EdgeInsets.symmetric(vertical: 5),
-      child:
-      Column(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          Text("Weekly Progress Reports", style:
-          TextStyle(
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
-          ),
-          ),
-          SizedBox(height: 10,),
-          Card(
-            color: Colors.white,
-            shape: RoundedRectangleBorder(
-                side: BorderSide(color: Colors.black, width: 2),
-                borderRadius: BorderRadius.circular(16)
-            ),
-            child: ListTile(
-              leading: Icon(Icons.assignment, color: Theme.of(context).colorScheme.primary, size: 30,),
-              title: Text(
-                "Weekly Progress Report 1",
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 16,
-                ),
-              ),
-              subtitle: Text(
-                "Feb 17, 2025 - Feb 21, 2025",
-                style: TextStyle(
-                  fontSize: 14,
-                ),
-              ),
-              trailing: Icon(Icons.more_vert),
-              onTap: () {
-                // lipat page
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => weekly_tasks_page()),
+  Widget build(BuildContext context) {
+    return FutureBuilder<String?>(
+      future: _getInternId(),
+      builder: (context, futureSnapshot) {
+        if (futureSnapshot.connectionState == ConnectionState.waiting) {
+          return Center(child: CircularProgressIndicator());
+        }
+
+        if (futureSnapshot.hasError || !futureSnapshot.hasData || futureSnapshot.data == null) {
+          return Center(child: Text("No intern ID found or an error occurred."));
+        }
+
+        final internId = futureSnapshot.data;
+
+        return StreamBuilder<QuerySnapshot>(
+          stream: FirebaseFirestore.instance
+              .collection('wpr_logs')
+              .where('internId', isEqualTo: internId)
+          // .orderBy('created_at', descending: true)
+              .snapshots(),
+          builder: (context, streamSnapshot) {
+            if (streamSnapshot.connectionState == ConnectionState.waiting) {
+              return Center(child: CircularProgressIndicator());
+            }
+
+            if (streamSnapshot.hasError) {
+              return Center(child: Text("Error loading logs: ${streamSnapshot.error}"));
+            }
+
+            if (!streamSnapshot.hasData || streamSnapshot.data!.docs.isEmpty) {
+              return Center(child: Text("No weekly progress report added yet."));
+            }
+
+            final logs = streamSnapshot.data!.docs;
+
+            return ListView.builder(
+              shrinkWrap: true,
+              physics: NeverScrollableScrollPhysics(),
+              itemCount: logs.length,
+              itemBuilder: (context, index) {
+                final log = logs[index];
+                return Card(
+                  elevation: 4,
+                  margin: EdgeInsets.symmetric(vertical: 8),
+                  color: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    side: BorderSide(color: Colors.black, width: 2),
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.all(4.0),
+                    child: ListTile(
+                      leading: Icon(
+                        Icons.assignment,
+                        color: Theme.of(context).colorScheme.primary,
+                        size: 30,
+                      ),
+                      title: Text(
+                        "Weekly Progress Report ${log['wprNum']}",
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                        ),
+                      ),
+                      subtitle: Text(
+                        "${log['startDate']} - ${log['endDate']}",
+                        style: TextStyle(
+                          fontSize: 14,
+                        ),
+                      ),
+                      trailing: PopupMenuButton<String>(
+                        onSelected: (value) {
+                          if (value == 'Edit') {
+                            showDialog(
+                              context: context,
+                              builder: (BuildContext context) {
+                                return UpdateWPR(wprId: log.id,);
+                              },
+                            );
+                          } else if (value == 'Delete') {
+                            showDialog(
+                              context: context,
+                              builder: (BuildContext context) {
+                                return AlertDialog(
+                                  title: Text(
+                                    "Delete WPR ${log['wprNum']}",
+                                    style: GoogleFonts.instrumentSerif(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.bold,
+                                      fontStyle: FontStyle.italic,
+                                    ),
+                                  ),
+                                  content: Text(
+                                    "Are you sure you want to delete this weekly progress report?",
+                                    style: GoogleFonts.manrope(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w400,
+                                    ),
+                                  ),
+                                  actions: [
+                                    TextButton(
+                                      onPressed: () => Navigator.of(context).pop(),
+                                      child: Text("Cancel"),
+                                    ),
+                                    ElevatedButton(
+                                      onPressed: () {
+                                        FirebaseFirestore.instance
+                                            .collection('wpr_logs')
+                                            .doc(log.id)
+                                            .delete()
+                                            .then((_) {
+                                          Navigator.of(context).pop();
+                                          ScaffoldMessenger.of(context).showSnackBar(
+                                            SnackBar(
+                                              content: Text("WPR deleted successfully."),
+                                              backgroundColor: Colors.red,
+                                            ),
+                                          );
+                                        }).catchError((error) {
+                                          Navigator.of(context).pop();
+                                          ScaffoldMessenger.of(context).showSnackBar(
+                                            SnackBar(
+                                              content: Text("Failed to delete WPR: $error"),
+                                              backgroundColor: Colors.red,
+                                            ),
+                                          );
+                                        });
+                                      },
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: Theme.of(context).colorScheme.primary,
+                                      ),
+                                      child: Text(
+                                        "Delete",
+                                        style: TextStyle(color: Colors.white),
+                                      ),
+                                    ),
+                                  ],
+                                );
+                              },
+                            );
+                          }
+                        },
+                        itemBuilder: (context) => [
+                          PopupMenuItem(
+                            value: 'Edit',
+                            child: Text(
+                              'Edit',
+                              style: GoogleFonts.manrope(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ),
+                          PopupMenuItem(
+                            value: 'Delete',
+                            child: Text(
+                              'Delete',
+                              style: GoogleFonts.manrope(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ),
+                        ],
+                        icon: Icon(Icons.more_vert),
+                      ),
+                      onTap: () {
+                        // lipat page
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => weekly_tasks_page(
+                              wprId: log.id,
+                              wprNum: log['wprNum'],
+                              startDate: log['startDate'],
+                              endDate: log['endDate'],
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
                 );
               },
-            ),
-          ),
-          Card(
-            color: Colors.white,
-            shape: RoundedRectangleBorder(
-                side: BorderSide(color: Colors.black, width: 2),
-                borderRadius: BorderRadius.circular(16)
-            ),
-            child: ListTile(
-              leading: Icon(Icons.assignment, color: Theme.of(context).colorScheme.primary, size: 30),
-              title: Text("Weekly Progress Report 2",
-                style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 16
-                ),
-              ),
-              subtitle: Text("Feb 24, 2025 - Feb 28, 2025",
-                style: TextStyle(
-                    fontSize: 14
-                ),
-              ),
-              trailing: Icon(Icons.more_vert),
-            ),
-          ),
-          Card(
-            color: Colors.white,
-            shape: RoundedRectangleBorder(
-                side: BorderSide(color: Colors.black, width: 2),
-                borderRadius: BorderRadius.circular(16)
-            ),
-            child: ListTile(
-              leading: Icon(Icons.assignment, color: Theme.of(context).colorScheme.primary, size: 30),
-              title: Text("Weekly Progress Report 3",
-                style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 16
-                ),
-              ),
-              subtitle: Text("Mar 03, 2025 - Mar 07, 2025",
-                style: TextStyle(
-                    fontSize: 14
-                ),
-              ),
-              trailing: Icon(Icons.more_vert),
-            ),
-          ),
-          Card(
-            color: Colors.white,
-            shape: RoundedRectangleBorder(
-                side: BorderSide(color: Colors.black, width: 2),
-                borderRadius: BorderRadius.circular(16)
-            ),
-            child: ListTile(
-              leading: Icon(Icons.assignment, color: Theme.of(context).colorScheme.primary, size: 30),
-              title: Text("Weekly Progress Report 4",
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 16,
-                ),
-              ),
-              subtitle: Text("Mar 10, 2025 - Mar 14, 2025",
-                style: TextStyle(
-                    fontSize: 14
-                ),
-              ),
-              trailing: Icon(Icons.more_vert),
-            ),
-          ),
-        ],
-      ),
+            );
+          },
+        );
+      },
     );
   }
 }
@@ -736,66 +822,131 @@ class _HomeScreenState extends State<HomeScreen> {
 }
 
 class AddWPR extends StatefulWidget {
+  final String? wprId;
+  final String? wprNum;
+  final String? startDate;
+  final String? endDate;
+
+  const AddWPR({
+    Key? key,
+    this.wprId,
+    this.wprNum,
+    this.startDate,
+    this.endDate
+}): super(key: key);
+
   @override
   _AddWPRState createState() => _AddWPRState();
 }
 
 class _AddWPRState extends State<AddWPR> {
+  @override
+  void initState() {
+    super.initState();
+    _wprNumController.text = widget.wprNum ?? '';
+    _startDateController.text = widget.startDate ?? '';
+    _endDateController.text = widget.endDate ?? '';
+  }
+
   DateTime? _selectedStartDate;
   DateTime? _selectedEndDate;
 
+  // Add Firebase Firestore reference
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+
+  // Counter reference for wpr logs
+  final DocumentReference counterDocRef = FirebaseFirestore.instance.collection('counters').doc('wpr_logs_counter');
+
+  Future<DateTime?> getInternStartDate() async {
+    final prefsService = SharedPreferencesService();
+    final internId = await prefsService.getInternData('id');
+
+    if (internId == null) return null;
+
+    final doc = await FirebaseFirestore.instance
+        .collection('interns') // adjust if your collection name differs
+        .doc(internId)
+        .get();
+
+    if (doc.exists) {
+      final data = doc.data();
+      if (data != null && data['startDate'] != null) {
+        // If stored as string in format 'd/M/yyyy'
+        try {
+          return DateFormat('d/M/yyyy').parseStrict(data['startDate']);
+        } catch (_) {}
+
+        // Or if stored as Firestore timestamp
+        if (data['startDate'] is Timestamp) {
+          return (data['startDate'] as Timestamp).toDate();
+        }
+      }
+    }
+
+    return null;
+  }
+
   void _pickStartDate(BuildContext context) async {
+    DateTime? internStartDate = await getInternStartDate();
+
+    if (internStartDate == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Intern start date not found.")),
+      );
+      return;
+    }
+
+    DateTime initialDate = _selectedStartDate ?? DateTime.now();
+
     DateTime? pickedStartDate = await showDatePicker(
       context: context,
-      initialDate: _selectedStartDate ?? DateTime.now(),
-      firstDate: DateTime.now(),
+      initialDate: initialDate,
+      firstDate: internStartDate,
       lastDate: DateTime(2100),
     );
+
     if (pickedStartDate != null) {
       setState(() {
-       _selectedStartDate = pickedStartDate;
-       _startDateController.text =
-         "${pickedStartDate.day}/${pickedStartDate.month}/${pickedStartDate.year}";
-         // _validateStartDate = false; //clear error if valid date is selected
-       });
+        _selectedStartDate = pickedStartDate;
+        _startDateController.text =
+        "${pickedStartDate.day}/${pickedStartDate.month}/${pickedStartDate.year}";
+      });
     }
   }
 
   void _pickEndDate(BuildContext context) async {
+    DateTime? internStartDate = await getInternStartDate();
+
+    if (internStartDate == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Intern start date not found.")),
+      );
+      return;
+    }
+
+    // Default initialDate to today, but ensure it's not before the intern's start date
+    DateTime initialDate = DateTime.now().isBefore(internStartDate)
+        ? internStartDate
+        : DateTime.now();
+
     DateTime? pickedEndDate = await showDatePicker(
       context: context,
-      initialDate: _selectedEndDate ?? DateTime.now(),
-      firstDate: DateTime.now(),
+      initialDate: _selectedEndDate ?? initialDate,
+      firstDate: internStartDate,
       lastDate: DateTime(2100),
     );
+
     if (pickedEndDate != null) {
       setState(() {
         _selectedEndDate = pickedEndDate;
         _endDateController.text =
         "${pickedEndDate.day}/${pickedEndDate.month}/${pickedEndDate.year}";
-        // _validateEndDate = false; //clear error if valid date is selected
       });
     }
   }
 
-  // implement a list of user model
-  List<wprModel> wprList = [];
 
-  //validations
-  void validateWprFields() {
-    //ginanto ko kasi may scenario na nawawala yung error checking/warning sa EndDate pag sinave ko kahit StartDate lng may laman
-    // setState(() {
-    //   if (_wprNumController.text.isEmpty) {
-    //     _validateWprNum = true;
-    //   }
-    //   if (_selectedStartDate == null) {
-    //     _validateStartDate = true;
-    //   }
-    //   if (_selectedEndDate == null) {
-    //     _validateEndDate = true;
-    //   }
-    // });
-
+  Future<void> addWprToFirestore() async {
     setState(() {
       _validateWprNum = _wprNumController.text.isEmpty;
       _validateStartDate = _selectedStartDate == null;
@@ -803,77 +954,63 @@ class _AddWPRState extends State<AddWPR> {
     });
 
     if(!_validateWprNum && !_validateStartDate && !_validateEndDate){
-      wprModel newWpr = wprModel(wprNum: int.parse(_wprNumController.text), startDate: _selectedStartDate!, endDate: _selectedEndDate!);
+      try {
+        // Retrieve the intern ID from shared preferences
+        SharedPreferencesService prefsService = SharedPreferencesService();
+        String? internId = await prefsService.getInternData('id');
 
-      wprList.add(newWpr);
+        if (internId == null) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text("No intern ID found. Please register first.")),
+          );
+          return;
+        }
 
-      FirebaseFirestore.instance.collection('wpr_logs').add({
-        'wprNum': newWpr.wprNum,
-        'startDate': newWpr.startDate,
-        'endDate': newWpr.endDate,
-      }).then((DocumentReference doc) {
-        print('DocumentSnapshot added with ID: ${doc.id}');
-      }).catchError((error) {
-        print('Error adding document: $error');
-      });
+        DocumentReference wprRef = FirebaseFirestore.instance.collection('wpr_logs').doc();
 
-      //clear all field
-      _wprNumController.clear();
-      _selectedStartDate = null;
-      _selectedEndDate = null;
-    }
-  }
-
-  // update function - dito sa example na to need muna ilagay yung name as an indentification para malaman kung anong data yung iuupdate
-  int searchIndex(int wprNum) {
-    return wprList.indexWhere((element) => element.wprNum == wprNum);
-  }
-
-  void updateWpr() {
-    _validateWprNum = _wprNumController.text.isEmpty;
-    _validateStartDate = _selectedStartDate == null;
-    _validateEndDate = _selectedEndDate == null;
-
-    if (!_validateWprNum &&
-        !_validateStartDate &&
-        !_validateEndDate) {
-      // update function
-      //update to firebase database by id and name
-      FirebaseFirestore.instance
-          .collection('wpr_logs')
-          .where('wprNum', isEqualTo: int.parse(_wprNumController.text))
-          .get()
-          .then((QuerySnapshot querySnapshot) {
-        querySnapshot.docs.forEach((doc) {
-          FirebaseFirestore.instance
-              .collection('wpr_logs')
-              .doc(doc.id)
-              .update({
-            'startDate': _selectedStartDate!,
-            'endDate': _selectedEndDate!,
-          }).then((value) {
-            print("WPR Updated");
-          }).catchError((error) {
-            print("Failed to update WPR: $error");
-          });
+        // Add the log with the intern ID
+        await wprRef.set({
+          'id': wprRef.id,
+          'internId': internId,
+          'wprNum': int.parse(_wprNumController.text),
+          'startDate': _startDateController.text,
+          'endDate': _endDateController.text,
+          'created_at': FieldValue.serverTimestamp(),
         });
-      });
 
-      int searchedIndex = searchIndex(int.parse(_wprNumController.text));
-      // check if name exists
-      if (searchedIndex != -1) {
-        setState(() {
-          wprList[searchedIndex].startDate = _selectedStartDate!;
-          wprList[searchedIndex].endDate = _selectedEndDate!;
-        });
+        // await FirebaseFirestore.instance.collection('wpr_logs').add({
+        //   'internId': internId,
+        //   'wprNum': int.parse(_wprNumController.text),
+        //   'startDate': _startDateController.text,
+        //   'endDate': _endDateController.text,
+        //   'created_at': FieldValue.serverTimestamp(),
+        // });
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Added progress log successfully!"), backgroundColor: Colors.green),
+        );
+
+        // waits for snackbar alert to appear before reddirectng
+        await Future.delayed(Duration(seconds: 2));
+
+        //clear all field
+        _wprNumController.clear();
+        _selectedStartDate = null;
+        _selectedEndDate = null;
+    }catch (error) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Failed to add log. Please try again.")),
+        );
       }
+    } else {
+      (context as Element).markNeedsBuild();
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: Text("Add Weekly Progress Report", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),),
+      title: Text("Add Weekly Progress Report", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
       content: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -967,31 +1104,15 @@ class _AddWPRState extends State<AddWPR> {
           child: Text("Cancel"),
         ),
         ElevatedButton(
-          onPressed:
-            // wprList.isNotEmpty ? null : () {
-              () {
-              setState(() {
-                validateWprFields();
-                });
-            },
-          style: FilledButton.styleFrom(
-            backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-          ),
-          child: Text("Save",
-            style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.bold,
-                color: Theme.of(context).colorScheme.onPrimaryContainer),
-          ),
-        ),
-        ElevatedButton(
           onPressed: () {
-              updateWpr();
+            setState(() {
+              addWprToFirestore();
+            });
           },
           style: FilledButton.styleFrom(
             backgroundColor: Theme.of(context).colorScheme.inversePrimary,
           ),
-          child: Text("Update",
+          child: Text("Save",
             style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.bold,
@@ -1003,6 +1124,242 @@ class _AddWPRState extends State<AddWPR> {
   }
 }
 
+class UpdateWPR extends StatefulWidget {
+  final String? wprId;
+  final String? wprNum;
+  final String? startDate;
+  final String? endDate;
+
+  const UpdateWPR({
+    Key? key,
+    this.wprId,
+    this.wprNum,
+    this.startDate,
+    this.endDate
+  }): super(key: key);
+
+  @override
+  _UpdateWPRState createState() => _UpdateWPRState();
+}
+
+class _UpdateWPRState extends State<UpdateWPR> {
+  DateTime? _selectedStartDate;
+  DateTime? _selectedEndDate;
+  bool _isLoading = true;
+  bool _validateWprNum = false;
+  bool _validateStartDate = false;
+  bool _validateEndDate = false;
+
+  final TextEditingController _wprNumController = TextEditingController();
+  final TextEditingController _startDateController = TextEditingController();
+  final TextEditingController _endDateController = TextEditingController();
+
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadExistingWprData();
+  }
+
+  Future<void> _loadExistingWprData() async {
+    if (widget.wprId == null) return;
+
+    try {
+      DocumentSnapshot doc = await _firestore.collection('wpr_logs').doc(widget.wprId).get();
+
+      if (doc.exists) {
+        Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
+
+        setState(() {
+          _wprNumController.text = data['wprNum'].toString();
+          _startDateController.text = data['startDate'] ?? '';
+          _endDateController.text = data['endDate'] ?? '';
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      print("Failed to load WPR data: $e");
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Failed to load existing log data.")),
+      );
+    }
+  }
+
+  void _pickStartDate(BuildContext context) async {
+    DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: _selectedStartDate ?? DateTime.now(),
+      firstDate: DateTime(2000),
+      lastDate: DateTime(2100),
+    );
+    if (picked != null) {
+      setState(() {
+        _selectedStartDate = picked;
+        _startDateController.text = "${picked.day}/${picked.month}/${picked.year}";
+      });
+    }
+  }
+
+  void _pickEndDate(BuildContext context) async {
+    DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: _selectedEndDate ?? DateTime.now(),
+      firstDate: DateTime(2000),
+      lastDate: DateTime(2100),
+    );
+    if (picked != null) {
+      setState(() {
+        _selectedEndDate = picked;
+        _endDateController.text = "${picked.day}/${picked.month}/${picked.year}";
+      });
+    }
+  }
+
+  Future<void> updateWpr() async {
+    if (widget.wprId == null) return;
+
+    String currentWprNum = widget.wprNum ?? '';
+    String currentStart = widget.startDate ?? '';
+    String currentEnd = widget.endDate ?? '';
+
+    String newWprNum = _wprNumController.text.trim();
+    String newStart = _startDateController.text.trim();
+    String newEnd = _endDateController.text.trim();
+
+    bool unchanged = newWprNum == currentWprNum &&
+        newStart == currentStart &&
+        newEnd == currentEnd;
+
+    if (unchanged) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("No changes have been made."), backgroundColor: Colors.orange),
+      );
+      return;
+    }
+
+    setState(() {
+      _validateWprNum = newWprNum.isEmpty;
+      _validateStartDate = newStart.isEmpty;
+      _validateEndDate = newEnd.isEmpty;
+    });
+
+    if (_validateWprNum || _validateStartDate || _validateEndDate) return;
+
+    try {
+      await _firestore.collection('wpr_logs').doc(widget.wprId).update({
+        'wprNum': int.parse(newWprNum),
+        'startDate': newStart,
+        'endDate': newEnd,
+        'updated_at': FieldValue.serverTimestamp(),
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("WPR log updated successfully!"), backgroundColor: Colors.green),
+      );
+
+      await Future.delayed(Duration(seconds: 2));
+
+      _wprNumController.clear();
+      _startDateController.clear();
+      _endDateController.clear();
+
+      Navigator.of(context).pop();
+    } catch (e) {
+      print("Update failed: $e");
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Failed to update log. Please try again."), backgroundColor: Colors.red),
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return _isLoading
+        ? Center(child: CircularProgressIndicator())
+        : AlertDialog(
+      title: Text("Update Weekly Progress Report", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          TextField(
+            controller: _wprNumController,
+            keyboardType: TextInputType.number,
+            decoration: InputDecoration(
+              labelText: "WPR #",
+              border: OutlineInputBorder(),
+              errorText: _validateWprNum ? "Enter a valid number" : null,
+            ),
+            inputFormatters: [
+              LengthLimitingTextInputFormatter(2),
+              FilteringTextInputFormatter.digitsOnly,
+            ],
+            onChanged: (text) {
+              setState(() {
+                if (text == "0" || text == "00" || (text.startsWith('0') && text.length > 1)) {
+                  _wprNumController.clear();
+                  _validateWprNum = true;
+                } else {
+                  _validateWprNum = false;
+                }
+              });
+            },
+          ),
+          SizedBox(height: 12),
+          TextField(
+            controller: _startDateController,
+            readOnly: true,
+            decoration: InputDecoration(
+              labelText: "Start Date",
+              hintText: "dd/mm/yyyy",
+              border: OutlineInputBorder(),
+              floatingLabelBehavior: FloatingLabelBehavior.auto,
+              suffixIcon: IconButton(
+                icon: Icon(Icons.calendar_month),
+                onPressed: () => _pickStartDate(context),
+              ),
+              errorText: _validateStartDate ? "Enter a valid start date" : null,
+            ),
+          ),
+          SizedBox(height: 12),
+          TextField(
+            controller: _endDateController,
+            readOnly: true,
+            decoration: InputDecoration(
+              labelText: "End Date",
+              hintText: "dd/mm/yyyy",
+              border: OutlineInputBorder(),
+              floatingLabelBehavior: FloatingLabelBehavior.auto,
+              suffixIcon: IconButton(
+                icon: Icon(Icons.calendar_month),
+                onPressed: () => _pickEndDate(context),
+              ),
+              errorText: _validateEndDate ? "Enter a valid end date" : null,
+            ),
+          ),
+        ],
+      ),
+      actions: [
+        TextButton(
+          onPressed: () {
+            _wprNumController.clear();
+            _startDateController.clear();
+            _endDateController.clear();
+            Navigator.pop(context);
+          },
+          child: Text("Cancel"),
+        ),
+        ElevatedButton(
+          onPressed: updateWpr,
+          style: FilledButton.styleFrom(
+            backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+          ),
+          child: Text("Save", style: TextStyle(fontWeight: FontWeight.bold)),
+        ),
+      ],
+    );
+  }
+}
 
 class BottomNavBar extends StatelessWidget {
   final int currentIndex;

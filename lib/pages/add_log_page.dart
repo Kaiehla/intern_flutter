@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import '../main.dart';
 import '../utils/shared_preferences_service.dart';
 import '../utils/validations.dart';
+import 'package:intl/intl.dart';
 
 final TextEditingController _taskController = TextEditingController();
 final TextEditingController _dateController = TextEditingController();
@@ -110,6 +111,7 @@ class _TextFieldSectionState extends State<TextFieldSection> {
       firstDate: DateTime(1900),
       lastDate: DateTime.now(),
     );
+
     if (pickedBirthday != null) {
       setState(() {
         _selectedStartDate = pickedBirthday;
@@ -434,7 +436,6 @@ class ButtonFieldSection extends StatelessWidget {
   const ButtonFieldSection({super.key, this.logId});
 
   void addLogToFirestore(BuildContext context) async {
-    // Validate all fields
     _validateTask = _taskController.text.isEmpty;
     _validateDate = _dateController.text.isEmpty;
     _validateHours = _hoursController.text.isEmpty;
@@ -442,9 +443,8 @@ class ButtonFieldSection extends StatelessWidget {
 
     if (!_validateTask && !_validateDate && !_validateHours && !_validateDescription) {
       try {
-        // Retrieve the intern ID from shared preferences
-        SharedPreferencesService prefsService = SharedPreferencesService();
-        String? internId = await prefsService.getInternData('id');
+        final prefsService = SharedPreferencesService();
+        final internId = await prefsService.getInternData('id');
 
         if (internId == null) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -453,13 +453,38 @@ class ButtonFieldSection extends StatelessWidget {
           return;
         }
 
-        // Add the log with the intern ID
+        DateTime logDate = DateFormat('d/M/yyyy').parseStrict(_dateController.text.trim());
+
+        // finds all the wpr logs and what wpr matches the task based on date range
+        final wprQuery = await FirebaseFirestore.instance
+            .collection('wpr_logs')
+            .where('internId', isEqualTo: internId)
+            .get();
+
+        String? matchedWprId;
+        for (var doc in wprQuery.docs) {
+          DateTime start = DateFormat('d/M/yyyy').parseStrict(doc['startDate']);
+          DateTime end = DateFormat('d/M/yyyy').parseStrict(doc['endDate']);
+          if (!logDate.isBefore(start) && !logDate.isAfter(end)) {
+            matchedWprId = doc.id;
+            break;
+          }
+        }
+
+        if (matchedWprId == null) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text("No matching WPR found for the given date.")),
+          );
+          return;
+        }
+
         await FirebaseFirestore.instance.collection('progress_logs').add({
           'internId': internId,
           'task': _taskController.text,
-          'date': _dateController.text,
+          'date': logDate.toIso8601String(),
           'hours': int.parse(_hoursController.text),
           'description': _descriptionController.text,
+          'wprId': matchedWprId,
           'created_at': FieldValue.serverTimestamp(),
         });
 
@@ -467,21 +492,20 @@ class ButtonFieldSection extends StatelessWidget {
           SnackBar(content: Text("Added progress log successfully!"), backgroundColor: Colors.green),
         );
 
-        // waits for snackbar alert to appear before reddirectng
         await Future.delayed(Duration(seconds: 2));
 
-        // Clear fields after successful submission
         _taskController.clear();
         _dateController.clear();
         _hoursController.clear();
         _descriptionController.clear();
 
-        // Navigate to the homepage
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (context) => MyApp()),
         );
-      } catch (error) {
+      } catch (error, stackTrace) {
+        print("Error adding log: $error");
+        print("Stack trace: $stackTrace");
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text("Failed to add log. Please try again.")),
         );
@@ -490,7 +514,6 @@ class ButtonFieldSection extends StatelessWidget {
       (context as Element).markNeedsBuild();
     }
   }
-
 
 
 

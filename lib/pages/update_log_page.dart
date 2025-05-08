@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/services.dart';
 import '../main.dart';
 import '../utils/validations.dart';
+import 'package:intl/intl.dart';
 
 final TextEditingController _taskController = TextEditingController();
 final TextEditingController _dateController = TextEditingController();
@@ -118,8 +119,7 @@ class _TextFieldSectionState extends State<TextFieldSection> {
     if (pickedBirthday != null) {
       setState(() {
         _selectedStartDate = pickedBirthday;
-        _dateController.text =
-        "${_selectedStartDate!.day}/${_selectedStartDate!.month}/${_selectedStartDate!.year}";
+        _dateController.text = DateFormat('d/M/yyyy').format(_selectedStartDate!);
       });
     }
   }
@@ -485,15 +485,62 @@ class ButtonFieldSection extends StatelessWidget {
             return;
           }
 
-          await FirebaseFirestore.instance
-              .collection('progress_logs')
-              .doc(logId)
-              .update({
+          String newLogDateString = _dateController.text.trim();
+
+          // Function to parse date strings into DateTime objects
+          DateTime parseDateString(String dateString) {
+            return DateFormat('d/M/yyyy').parseStrict(dateString);
+          }
+
+          // Parse the new log date
+          DateTime newLogDate = parseDateString(newLogDateString);
+
+          QuerySnapshot wprSnapshot = await FirebaseFirestore.instance
+              .collection('wpr_logs')
+              .get();
+
+          String? newWprId;
+
+          // Loop through WPR logs to find the matching one based on the new date
+          for (var doc in wprSnapshot.docs) {
+            // Handle both Timestamp and String for startDate and endDate
+            var startDate = doc['startDate'];
+            var endDate = doc['endDate'];
+
+            DateTime start, end;
+
+            // If it's a Timestamp, convert it to DateTime. If it's a string, parse it.
+            if (startDate is Timestamp) {
+              start = startDate.toDate();
+            } else if (startDate is String) {
+              start = DateFormat('d/M/yyyy').parseStrict(startDate);
+            } else {
+              throw Exception("Unknown date format for startDate.");
+            }
+
+            if (endDate is Timestamp) {
+              end = endDate.toDate();
+            } else if (endDate is String) {
+              end = DateFormat('d/M/yyyy').parseStrict(endDate);
+            } else {
+              throw Exception("Unknown date format for endDate.");
+            }
+
+            // Check if the new log date falls within the range of the WPR dates
+            if (!newLogDate.isBefore(start) && !newLogDate.isAfter(end)) {
+              newWprId = doc.id;
+              break;
+            }
+          }
+
+          // Update the progress log with the new data
+          await FirebaseFirestore.instance.collection('progress_logs').doc(logId).update({
             'task': _taskController.text,
-            'date': _dateController.text,
+            'date': newLogDateString, // Update the date as a string
             'hours': hours,
             'description': _descriptionController.text,
             'updated_at': FieldValue.serverTimestamp(),
+            if (newWprId != null) 'wprId': newWprId, // Update the WPR if it changed
           });
 
           ScaffoldMessenger.of(context).showSnackBar(
@@ -525,7 +572,6 @@ class ButtonFieldSection extends StatelessWidget {
       }
     }
   }
-
 
 
   @override
