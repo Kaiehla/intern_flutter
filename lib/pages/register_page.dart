@@ -81,11 +81,11 @@ class register_page extends StatelessWidget {
             );
           },
         ),
-        drawer: Drawer(
-          child: ListView(
-            children: [DrwHeader(), DrwListView()],
-          ),
-        ),
+        // drawer: Drawer(
+        //   child: ListView(
+        //     children: [DrwHeader(), DrwListView()],
+        //   ),
+        // ),
       ),
     );
   }

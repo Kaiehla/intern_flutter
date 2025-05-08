@@ -37,8 +37,11 @@ void main() async {
     options: DefaultFirebaseOptions.currentPlatform,
   );
 
-  // runApp(const MyApp());
-  runApp(const register_page());
+  // Check if the app has already registered user
+  String? internId = await prefsService.getInternData('id');
+  bool hasRegisteredUser = internId?.isNotEmpty ?? false;
+
+  runApp(hasRegisteredUser ? const MyApp() : const onboarding_page());
 }
 
 class MyApp extends StatelessWidget {
@@ -56,10 +59,13 @@ class MyApp extends StatelessWidget {
           useMaterial3: true,
           textTheme: GoogleFonts.manropeTextTheme(),
           bottomNavigationBarTheme: BottomNavigationBarThemeData(
-            selectedItemColor: Colors.deepPurple, // Label color
+            selectedItemColor: Colors.deepPurple,
+            // Label color
             unselectedItemColor: Colors.black45,
-            selectedIconTheme: IconThemeData(color: const Color(0xFFF3B006)), // Selected icon color
-            unselectedIconTheme: IconThemeData(color: Colors.black45), // Unselected icon color
+            selectedIconTheme: IconThemeData(color: const Color(0xFFF3B006)),
+            // Selected icon color
+            unselectedIconTheme: IconThemeData(color: Colors.black45),
+            // Unselected icon color
             backgroundColor: Colors.white,
             elevation: 5,
             showSelectedLabels: true,
@@ -75,8 +81,7 @@ class MyApp extends StatelessWidget {
           ),
         ),
         debugShowCheckedModeBanner: false,
-        home: const HomeScreen()
-    );
+        home: const HomeScreen());
   }
 }
 
@@ -128,32 +133,39 @@ class _DrwListView extends State<DrwListView> {
         ListTile(
           title: Text("Home"),
           leading: Icon(SolarIconsOutline.homeSmile),
-          onTap: () => Navigator.push(
-              context, MaterialPageRoute(builder: (context) => MyApp())),
+          onTap: () =>
+              Navigator.push(
+                  context, MaterialPageRoute(builder: (context) => MyApp())),
         ),
         ListTile(
           title: Text("Create Intern ID"),
           leading: Icon(Icons.person_add_alt_1),
-          onTap: () => Navigator.push(context,
-              MaterialPageRoute(builder: (context) => register_page())),
+          onTap: () =>
+              Navigator.push(context,
+                  MaterialPageRoute(builder: (context) => register_page())),
         ),
         ListTile(
           title: Text("Add Progress"),
           leading: Icon(Icons.add),
-          onTap: () => Navigator.push(
-              context, MaterialPageRoute(builder: (context) => add_log_page())),
+          onTap: () =>
+              Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => add_log_page())),
         ),
         ListTile(
           title: Text("My Intern"),
           leading: Icon(Icons.person),
-          onTap: () => Navigator.push(
-              context, MaterialPageRoute(builder: (context) => profile_page())),
+          onTap: () =>
+              Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => profile_page())),
         ),
         ListTile(
           title: Text("Onboarding"),
           leading: Icon(Icons.video_collection_outlined),
-          onTap: () => Navigator.push(
-              context, MaterialPageRoute(builder: (context) => onboarding_page())),
+          onTap: () =>
+              Navigator.push(context,
+                  MaterialPageRoute(builder: (context) => onboarding_page())),
         ),
       ]),
     );
@@ -384,6 +396,58 @@ class ProgressSection extends StatelessWidget {
     return {'hoursCompleted': totalHours, 'hoursRequired': hoursRequired};
   }
 
+  Future<String?> getInternPosition() async {
+    try {
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      String? internId = prefs.getString('internModel') != null
+          ? jsonDecode(prefs.getString('internModel')!)['id']
+          : null;
+
+      if (internId == null) {
+        print("Intern ID not found in SharedPreferences.");
+        return null;
+      }
+
+      DocumentSnapshot internSnapshot = await FirebaseFirestore.instance
+          .collection('interns')
+          .doc(internId)
+          .get();
+
+      return internSnapshot.exists
+          ? (internSnapshot.data() as Map<String, dynamic>)['position'] as String?
+          : null;
+    } catch (e) {
+      print("Error fetching intern position: $e");
+      return null;
+    }
+  }
+
+  Future<String?> getInternCompany() async {
+    try {
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      String? internId = prefs.getString('internModel') != null
+          ? jsonDecode(prefs.getString('internModel')!)['id']
+          : null;
+
+      if (internId == null) {
+        print("Intern ID not found in SharedPreferences.");
+        return null;
+      }
+
+      DocumentSnapshot internSnapshot = await FirebaseFirestore.instance
+          .collection('interns')
+          .doc(internId)
+          .get();
+
+      return internSnapshot.exists
+          ? (internSnapshot.data() as Map<String, dynamic>)['company'] as String?
+          : null;
+    } catch (e) {
+      print("Error fetching intern company: $e");
+      return null;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Padding(
@@ -393,7 +457,11 @@ class ProgressSection extends StatelessWidget {
         children: [
           Container(
             decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.primary.withOpacity(0.10),
+              color: Theme
+                  .of(context)
+                  .colorScheme
+                  .primary
+                  .withOpacity(0.10),
               borderRadius: const BorderRadius.only(
                 bottomLeft: Radius.circular(30),
                 bottomRight: Radius.circular(30),
@@ -431,8 +499,10 @@ class ProgressSection extends StatelessWidget {
                       } else if (!snapshot.hasData || snapshot.data == null) {
                         return const Text("No progress data found.");
                       } else {
-                        final hoursCompleted = snapshot.data!['hoursCompleted'] ?? 0;
-                        final hoursRequired = snapshot.data!['hoursRequired'] ?? 0;
+                        final hoursCompleted =
+                            snapshot.data!['hoursCompleted'] ?? 0;
+                        final hoursRequired =
+                            snapshot.data!['hoursRequired'] ?? 0;
                         final progress = hoursRequired > 0
                             ? (hoursCompleted / hoursRequired)
                             : 0.0;
@@ -449,11 +519,15 @@ class ProgressSection extends StatelessWidget {
                                   child: CircularProgressIndicator(
                                     value: progress,
                                     strokeWidth: 8,
-                                    backgroundColor: Theme.of(context)
+                                    backgroundColor: Theme
+                                        .of(context)
                                         .colorScheme
                                         .inversePrimary,
                                     valueColor: AlwaysStoppedAnimation<Color>(
-                                      Theme.of(context).colorScheme.primary,
+                                      Theme
+                                          .of(context)
+                                          .colorScheme
+                                          .primary,
                                     ),
                                   ),
                                 ),
@@ -473,7 +547,10 @@ class ProgressSection extends StatelessWidget {
                               style: TextStyle(
                                 fontSize: 23,
                                 fontWeight: FontWeight.w900,
-                                color: Theme.of(context).colorScheme.primary,
+                                color: Theme
+                                    .of(context)
+                                    .colorScheme
+                                    .primary,
                               ),
                             ),
                           ],
@@ -481,9 +558,8 @@ class ProgressSection extends StatelessWidget {
                       }
                     },
                   ),
-
                   FutureBuilder<String?>(
-                    future: prefsService.getInternData('position'),
+                    future: getInternPosition(),
                     builder: (context, snapshot) {
                       if (snapshot.connectionState == ConnectionState.waiting) {
                         return const CircularProgressIndicator(); // Show a loading indicator while waiting
@@ -495,7 +571,7 @@ class ProgressSection extends StatelessWidget {
                         return Text(
                           snapshot.data!,
                           style: TextStyle(
-                            fontSize: 24,
+                            fontSize: 18,
                             color: Colors.black,
                             fontStyle: FontStyle.italic,
                             fontFamily: GoogleFonts.instrumentSerif().fontFamily,
@@ -505,7 +581,7 @@ class ProgressSection extends StatelessWidget {
                     },
                   ),
                   FutureBuilder<String?>(
-                    future: prefsService.getInternData('company'),
+                    future: getInternCompany(),
                     builder: (context, snapshot) {
                       if (snapshot.connectionState == ConnectionState.waiting) {
                         return const CircularProgressIndicator(); // Show a loading indicator while waiting
@@ -524,7 +600,7 @@ class ProgressSection extends StatelessWidget {
                         );
                       }
                     },
-                  )
+                  ),
                 ],
               ),
             ),
@@ -535,31 +611,40 @@ class ProgressSection extends StatelessWidget {
   }
 }
 
-class WeeklyProgressSection extends StatelessWidget{
+class WeeklyProgressSection extends StatelessWidget {
   const WeeklyProgressSection({super.key});
 
   @override
-  Widget build(BuildContext context){
-    return Padding(padding: EdgeInsets.symmetric(vertical: 5),
-      child:
-      Column(
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.symmetric(vertical: 5),
+      child: Column(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Text("Weekly Progress Reports", style:
-          TextStyle(
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
+          Text(
+            "Weekly Progress Reports",
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+            ),
           ),
+          SizedBox(
+            height: 10,
           ),
-          SizedBox(height: 10,),
           Card(
             color: Colors.white,
             shape: RoundedRectangleBorder(
                 side: BorderSide(color: Colors.black, width: 2),
-                borderRadius: BorderRadius.circular(16)
-            ),
+                borderRadius: BorderRadius.circular(16)),
             child: ListTile(
-              leading: Icon(Icons.assignment, color: Theme.of(context).colorScheme.primary, size: 30,),
+              leading: Icon(
+                Icons.assignment,
+                color: Theme
+                    .of(context)
+                    .colorScheme
+                    .primary,
+                size: 30,
+              ),
               title: Text(
                 "Weekly Progress Report 1",
                 style: TextStyle(
@@ -587,20 +672,20 @@ class WeeklyProgressSection extends StatelessWidget{
             color: Colors.white,
             shape: RoundedRectangleBorder(
                 side: BorderSide(color: Colors.black, width: 2),
-                borderRadius: BorderRadius.circular(16)
-            ),
+                borderRadius: BorderRadius.circular(16)),
             child: ListTile(
-              leading: Icon(Icons.assignment, color: Theme.of(context).colorScheme.primary, size: 30),
-              title: Text("Weekly Progress Report 2",
-                style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 16
-                ),
+              leading: Icon(Icons.assignment,
+                  color: Theme
+                      .of(context)
+                      .colorScheme
+                      .primary, size: 30),
+              title: Text(
+                "Weekly Progress Report 2",
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
               ),
-              subtitle: Text("Feb 24, 2025 - Feb 28, 2025",
-                style: TextStyle(
-                    fontSize: 14
-                ),
+              subtitle: Text(
+                "Feb 24, 2025 - Feb 28, 2025",
+                style: TextStyle(fontSize: 14),
               ),
               trailing: Icon(Icons.more_vert),
             ),
@@ -609,20 +694,20 @@ class WeeklyProgressSection extends StatelessWidget{
             color: Colors.white,
             shape: RoundedRectangleBorder(
                 side: BorderSide(color: Colors.black, width: 2),
-                borderRadius: BorderRadius.circular(16)
-            ),
+                borderRadius: BorderRadius.circular(16)),
             child: ListTile(
-              leading: Icon(Icons.assignment, color: Theme.of(context).colorScheme.primary, size: 30),
-              title: Text("Weekly Progress Report 3",
-                style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 16
-                ),
+              leading: Icon(Icons.assignment,
+                  color: Theme
+                      .of(context)
+                      .colorScheme
+                      .primary, size: 30),
+              title: Text(
+                "Weekly Progress Report 3",
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
               ),
-              subtitle: Text("Mar 03, 2025 - Mar 07, 2025",
-                style: TextStyle(
-                    fontSize: 14
-                ),
+              subtitle: Text(
+                "Mar 03, 2025 - Mar 07, 2025",
+                style: TextStyle(fontSize: 14),
               ),
               trailing: Icon(Icons.more_vert),
             ),
@@ -631,20 +716,23 @@ class WeeklyProgressSection extends StatelessWidget{
             color: Colors.white,
             shape: RoundedRectangleBorder(
                 side: BorderSide(color: Colors.black, width: 2),
-                borderRadius: BorderRadius.circular(16)
-            ),
+                borderRadius: BorderRadius.circular(16)),
             child: ListTile(
-              leading: Icon(Icons.assignment, color: Theme.of(context).colorScheme.primary, size: 30),
-              title: Text("Weekly Progress Report 4",
+              leading: Icon(Icons.assignment,
+                  color: Theme
+                      .of(context)
+                      .colorScheme
+                      .primary, size: 30),
+              title: Text(
+                "Weekly Progress Report 4",
                 style: TextStyle(
                   fontWeight: FontWeight.bold,
                   fontSize: 16,
                 ),
               ),
-              subtitle: Text("Mar 10, 2025 - Mar 14, 2025",
-                style: TextStyle(
-                    fontSize: 14
-                ),
+              subtitle: Text(
+                "Mar 10, 2025 - Mar 14, 2025",
+                style: TextStyle(fontSize: 14),
               ),
               trailing: Icon(Icons.more_vert),
             ),
@@ -676,38 +764,38 @@ class _HomeScreenState extends State<HomeScreen> {
   // navigation logic
   int _selectedIndex = 0;
 
- final List<Widget> _pages = [
-   Scaffold(
-     appBar: AppBar(
-       title: SizedBox(
-         height: 42,
-         child: Gif(
-           image: AssetImage("logo.gif"),
-           autostart: Autostart.loop,
-         ),
-       ),
-       centerTitle: true,
-     ),
-     body: SingleChildScrollView(
-       child: Padding(
-         padding: const EdgeInsets.symmetric(horizontal: 16),
-         child: Column(
-           children: const [
-             ProgressSection(),
-             WeeklyProgressSection(),
-           ],
-         ),
-       ),
-     ),
-     drawer: Drawer(
-       child: ListView(
-         children: [DrwHeader(), DrwListView()],
-       ),
-     ),
-   ),
-   const add_log_page(),
-   const profile_page(),
- ];
+  final List<Widget> _pages = [
+    Scaffold(
+      appBar: AppBar(
+        title: SizedBox(
+          height: 42,
+          child: Gif(
+            image: AssetImage("logo.gif"),
+            autostart: Autostart.loop,
+          ),
+        ),
+        centerTitle: true,
+      ),
+      body: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: Column(
+            children: const [
+              ProgressSection(),
+              WeeklyProgressSection(),
+            ],
+          ),
+        ),
+      ),
+      // drawer: Drawer(
+      //   child: ListView(
+      //     children: [DrwHeader(), DrwListView()],
+      //   ),
+      // ),
+    ),
+    const add_log_page(),
+    const profile_page(),
+  ];
 
   void _onItemTapped(int index) {
     setState(() {
@@ -728,8 +816,7 @@ class _HomeScreenState extends State<HomeScreen> {
         child: Icon(Icons.add),
         shape: RoundedRectangleBorder(
             side: BorderSide(color: Colors.black, width: 2),
-            borderRadius: BorderRadius.circular(16)
-        ),
+            borderRadius: BorderRadius.circular(16)),
       ),
     );
   }
@@ -753,11 +840,12 @@ class _AddWPRState extends State<AddWPR> {
     );
     if (pickedStartDate != null) {
       setState(() {
-       _selectedStartDate = pickedStartDate;
-       _startDateController.text =
-         "${pickedStartDate.day}/${pickedStartDate.month}/${pickedStartDate.year}";
-         // _validateStartDate = false; //clear error if valid date is selected
-       });
+        _selectedStartDate = pickedStartDate;
+        _startDateController.text =
+        "${pickedStartDate.day}/${pickedStartDate.month}/${pickedStartDate
+            .year}";
+        // _validateStartDate = false; //clear error if valid date is selected
+      });
     }
   }
 
@@ -802,8 +890,11 @@ class _AddWPRState extends State<AddWPR> {
       _validateEndDate = _selectedEndDate == null;
     });
 
-    if(!_validateWprNum && !_validateStartDate && !_validateEndDate){
-      wprModel newWpr = wprModel(wprNum: int.parse(_wprNumController.text), startDate: _selectedStartDate!, endDate: _selectedEndDate!);
+    if (!_validateWprNum && !_validateStartDate && !_validateEndDate) {
+      wprModel newWpr = wprModel(
+          wprNum: int.parse(_wprNumController.text),
+          startDate: _selectedStartDate!,
+          endDate: _selectedEndDate!);
 
       wprList.add(newWpr);
 
@@ -834,9 +925,7 @@ class _AddWPRState extends State<AddWPR> {
     _validateStartDate = _selectedStartDate == null;
     _validateEndDate = _selectedEndDate == null;
 
-    if (!_validateWprNum &&
-        !_validateStartDate &&
-        !_validateEndDate) {
+    if (!_validateWprNum && !_validateStartDate && !_validateEndDate) {
       // update function
       //update to firebase database by id and name
       FirebaseFirestore.instance
@@ -845,10 +934,7 @@ class _AddWPRState extends State<AddWPR> {
           .get()
           .then((QuerySnapshot querySnapshot) {
         querySnapshot.docs.forEach((doc) {
-          FirebaseFirestore.instance
-              .collection('wpr_logs')
-              .doc(doc.id)
-              .update({
+          FirebaseFirestore.instance.collection('wpr_logs').doc(doc.id).update({
             'startDate': _selectedStartDate!,
             'endDate': _selectedEndDate!,
           }).then((value) {
@@ -873,7 +959,10 @@ class _AddWPRState extends State<AddWPR> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: Text("Add Weekly Progress Report", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),),
+      title: Text(
+        "Add Weekly Progress Report",
+        style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+      ),
       content: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -891,7 +980,9 @@ class _AddWPRState extends State<AddWPR> {
             ],
             onChanged: (text) {
               // so it doesn't accept 0, 00, or 01 as inputs
-              if (text == "0" || text == "00" || (text.startsWith('0') && text.length > 1)) {
+              if (text == "0" ||
+                  text == "00" ||
+                  (text.startsWith('0') && text.length > 1)) {
                 _wprNumController.clear();
                 setState(() {
                   _validateWprNum = true;
@@ -912,7 +1003,8 @@ class _AddWPRState extends State<AddWPR> {
             decoration: InputDecoration(
               labelText: "Start Date",
               hintText: _selectedStartDate != null
-                  ? "${_selectedStartDate!.day}/${_selectedStartDate!.month}/${_selectedStartDate!.year}"
+                  ? "${_selectedStartDate!.day}/${_selectedStartDate!
+                  .month}/${_selectedStartDate!.year}"
                   : "dd/mm/yyyy",
               border: OutlineInputBorder(),
               floatingLabelBehavior: _selectedStartDate != null
@@ -937,7 +1029,8 @@ class _AddWPRState extends State<AddWPR> {
             decoration: InputDecoration(
               labelText: "End Date",
               hintText: _selectedEndDate != null
-                  ? "${_selectedEndDate!.day}/${_selectedEndDate!.month}/${_selectedEndDate!.year}"
+                  ? "${_selectedEndDate!.day}/${_selectedEndDate!
+                  .month}/${_selectedEndDate!.year}"
                   : "dd/mm/yyyy",
               border: OutlineInputBorder(),
               floatingLabelBehavior: _selectedStartDate != null
@@ -968,41 +1061,54 @@ class _AddWPRState extends State<AddWPR> {
         ),
         ElevatedButton(
           onPressed:
-            // wprList.isNotEmpty ? null : () {
+          // wprList.isNotEmpty ? null : () {
               () {
-              setState(() {
-                validateWprFields();
-                });
-            },
+            setState(() {
+              validateWprFields();
+            });
+          },
           style: FilledButton.styleFrom(
-            backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+            backgroundColor: Theme
+                .of(context)
+                .colorScheme
+                .inversePrimary,
           ),
-          child: Text("Save",
+          child: Text(
+            "Save",
             style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.bold,
-                color: Theme.of(context).colorScheme.onPrimaryContainer),
+                color: Theme
+                    .of(context)
+                    .colorScheme
+                    .onPrimaryContainer),
           ),
         ),
         ElevatedButton(
           onPressed: () {
-              updateWpr();
+            updateWpr();
           },
           style: FilledButton.styleFrom(
-            backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+            backgroundColor: Theme
+                .of(context)
+                .colorScheme
+                .inversePrimary,
           ),
-          child: Text("Update",
+          child: Text(
+            "Update",
             style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.bold,
-                color: Theme.of(context).colorScheme.onPrimaryContainer),
+                color: Theme
+                    .of(context)
+                    .colorScheme
+                    .onPrimaryContainer),
           ),
         ),
       ],
     );
   }
 }
-
 
 class BottomNavBar extends StatelessWidget {
   final int currentIndex;
