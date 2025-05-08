@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:intern_flutter/main.dart';
 import 'package:intern_flutter/models/internModel.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -6,6 +7,8 @@ import 'package:gif/gif.dart';
 import 'package:intern_flutter/pages/register_page.dart';
 import 'package:intern_flutter/utils/globals.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+
+import '../utils/validations.dart';
 
 class profile_page extends StatefulWidget {
   const profile_page({super.key});
@@ -73,7 +76,45 @@ class _ProfilePageState extends State<profile_page> {
     final schoolController = TextEditingController(text: internData!.school);
     final companyController = TextEditingController(text: internData!.company);
     final positionController = TextEditingController(text: internData!.position);
-    DateTime selectedBirthday = birthday;
+    DateTime? selectedBirthday = birthday;
+
+    bool _validateName = false;
+    bool _validateBirthday = false;
+    bool _validateSchool = false;
+    bool _validateCompany = false;
+    bool _validatePosition = false;
+    bool _validateStartDate = false;
+    bool _validateHoursRequired = false;
+
+    bool validateIDFields() {
+      bool isValid = false;
+
+      setState(() {
+        _validateName = nameController.text.isEmpty;
+        _validateBirthday = birthday == null;
+        _validateSchool = schoolController.text.isEmpty;
+        _validateCompany = companyController.text.isEmpty;
+        _validatePosition = positionController.text.isEmpty;
+
+        // if tama na lahat ng fields, proceed to main page then clear all fields
+        if (!_validateName &&
+            !_validateBirthday &&
+            !_validateSchool &&
+            !_validateCompany &&
+            !_validatePosition &&
+            !_validateStartDate &&
+            !_validateHoursRequired) {
+          isValid = true;
+        }
+      });
+      return isValid;
+    }
+
+    bool isValidBirthday(DateTime birthday) {
+      final today = DateTime.now();
+      final age = today.year - birthday.year - ((today.month < birthday.month || (today.month == birthday.month && today.day < birthday.day)) ? 1 : 0);
+      return age >= 16;
+    }
 
     showDialog(
       context: context,
@@ -91,63 +132,143 @@ class _ProfilePageState extends State<profile_page> {
                       children: [
                         TextField(
                           controller: nameController,
-                          decoration: const InputDecoration(
-                            labelText: 'Name',
+                          maxLength: 25,
+                          decoration: InputDecoration(
+                            labelText: "Name",
                             border: OutlineInputBorder(),
+                            errorText: _validateName ? "Enter a valid Name" : null,
                           ),
-                        ),
-                        const SizedBox(height: 12),
-                        GestureDetector(
-                          onTap: () async {
-                            final picked = await showDatePicker(
-                              context: context,
-                              initialDate: selectedBirthday,
-                              firstDate: DateTime(1950),
-                              lastDate: DateTime(2100),
-                            );
-                            if (picked != null) {
-                              setState(() => selectedBirthday = picked);
-                            }
+                          inputFormatters: <TextInputFormatter>[
+                            LengthLimitingTextInputFormatter(50),
+                            ...Validations.strictDenyPatterns.map((pattern) =>
+                                FilteringTextInputFormatter.deny(RegExp(pattern))),
+                            // Apply deny filters
+                          ],
+                          onChanged: (text) {
+                            setState(() {
+                              _validateName = false;
+                            });
                           },
-                          child: InputDecorator(
-                            decoration: const InputDecoration(
-                              labelText: 'Birthday',
-                              border: OutlineInputBorder(),
-                            ),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Text(
-                                  "${selectedBirthday.month}/${selectedBirthday.day}/${selectedBirthday.year}",
-                                ),
-                                const Icon(Icons.calendar_today, size: 16),
-                              ],
-                            ),
-                          ),
                         ),
                         const SizedBox(height: 12),
+
+
+
+
+
+
+
+                  GestureDetector(
+                    onTap: () async {
+                      final picked = await showDatePicker(
+                        context: context,
+                        initialDate: selectedBirthday ?? DateTime(2000),
+                        firstDate: DateTime(1950),
+                        lastDate: DateTime.now(), // Ensure birthday can't be in the future
+                      );
+                      if (picked != null) {
+                        if (isValidBirthday(picked)) {
+                          setState(() {
+                            selectedBirthday = picked;
+                            _validateBirthday = false;
+                          });
+                        } else {
+                          setState(() {
+                            _validateBirthday = true;
+                            selectedBirthday = null; // Clear if invalid
+                          });
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text("You must be at least 16 years old to use HoursTruly"),
+                            ),
+                          );
+                        }
+                      }
+                    },
+                    child: InputDecorator(
+                      decoration: InputDecoration(
+                        labelText: 'Birthday',
+                        border: const OutlineInputBorder(),
+                        errorText: _validateBirthday ? 'Enter a valid Birthday' : null,
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            selectedBirthday != null
+                                ? "${selectedBirthday!.month}/${selectedBirthday!.day}/${selectedBirthday!.year}"
+                                : "dd/mm/yyyy",
+                          ),
+                          const Icon(Icons.calendar_today, size: 16),
+                        ],
+                      ),
+                    ),
+                  ),
+
+
+
+                  const SizedBox(height: 12),
                         TextField(
                           controller: schoolController,
-                          decoration: const InputDecoration(
-                            labelText: 'School',
+                          maxLength: 30,
+                          decoration: InputDecoration(
+                            labelText: "School",
                             border: OutlineInputBorder(),
+                            errorText: _validateSchool ? "Enter a valid School" : null,
                           ),
+                          inputFormatters: <TextInputFormatter>[
+                            LengthLimitingTextInputFormatter(30),
+                            ...Validations.generalNoNumbersDenyPatterns.map((pattern) =>
+                                FilteringTextInputFormatter.deny(RegExp(pattern))),
+                            // Apply deny filters
+                          ],
+                          onChanged: (text) {
+                            setState(() {
+                              _validateSchool = false;
+                            });
+                          },
                         ),
                         const SizedBox(height: 12),
                         TextField(
                           controller: companyController,
-                          decoration: const InputDecoration(
-                            labelText: 'Company',
+                          maxLength: 30,
+                          decoration: InputDecoration(
+                            labelText: "Internship Company",
                             border: OutlineInputBorder(),
+                            errorText: _validateCompany ? "Enter a valid Company" : null,
                           ),
+                          inputFormatters: <TextInputFormatter>[
+                            LengthLimitingTextInputFormatter(30),
+                            ...Validations.generalDenyPatterns.map((pattern) =>
+                                FilteringTextInputFormatter.deny(RegExp(pattern))),
+                            // Apply deny filters
+                          ],
+                          onChanged: (text) {
+                            setState(() {
+                              _validateCompany = false;
+                            });
+                          },
                         ),
                         const SizedBox(height: 12),
                         TextField(
                           controller: positionController,
-                          decoration: const InputDecoration(
-                            labelText: 'Position',
+                          maxLength: 30,
+                          decoration: InputDecoration(
+                            labelText: "Intern Position",
                             border: OutlineInputBorder(),
+                            errorText: _validatePosition ? "Enter a valid Position" : null,
                           ),
+                          inputFormatters: <TextInputFormatter>[
+                            LengthLimitingTextInputFormatter(30),
+                            ...Validations.generalDenyPatterns.map((pattern) =>
+                                FilteringTextInputFormatter.deny(RegExp(pattern))),
+                            // Apply deny filters
+                          ],
+                          onChanged: (text) {
+                            setState(() {
+                              _validatePosition = false;
+                            });
+                          },
                         ),
                       ],
                     ),
@@ -162,13 +283,16 @@ class _ProfilePageState extends State<profile_page> {
               ),
               TextButton(
                 onPressed: () async {
+                  if (!validateIDFields()) {
+                    return;
+                  }
                   try {
                     await FirebaseFirestore.instance
                         .collection('interns')
                         .doc(internData!.id)
                         .update({
                       'name': nameController.text.trim(),
-                      'birthday': Timestamp.fromDate(selectedBirthday),
+                      'birthday': Timestamp.fromDate(selectedBirthday!),
                       'school': schoolController.text.trim(),
                       'company': companyController.text.trim(),
                       'position': positionController.text.trim(),
@@ -226,6 +350,8 @@ class _ProfilePageState extends State<profile_page> {
       text: internData!.hoursRequired.toString(),
     );
 
+    bool _validateHoursRequired = false;
+
     showDialog(
       context: context,
       builder: (context) {
@@ -241,11 +367,35 @@ class _ProfilePageState extends State<profile_page> {
                     children: [
                       TextField(
                         controller: hoursController,
-                        keyboardType: TextInputType.number,
-                        decoration: const InputDecoration(
-                          labelText: 'Hours Required',
+                        maxLength: 4,
+                        decoration: InputDecoration(
+                          labelText: "Hours Required",
                           border: OutlineInputBorder(),
+                          suffixIcon: Icon(Icons.timer_outlined),
+                          errorText: _validateHoursRequired
+                              ? "Enter hours in numbers"
+                              : null,
                         ),
+                        keyboardType: TextInputType.number,
+                        inputFormatters: <TextInputFormatter>[
+                          LengthLimitingTextInputFormatter(4),
+                          FilteringTextInputFormatter.digitsOnly
+                        ],
+                        onChanged: (text) {
+                          // so it doesn't accept 0, 00, or 01 as inputs
+                          if (text == "0" ||
+                              text == "00" ||
+                              (text.startsWith('0') && text.length > 1)) {
+                            hoursController.clear();
+                            setState(() {
+                              _validateHoursRequired = true;
+                            });
+                          } else {
+                            setState(() {
+                              _validateHoursRequired = false;
+                            });
+                          }
+                        },
                       ),
                     ],
                   );
@@ -324,6 +474,7 @@ class _ProfilePageState extends State<profile_page> {
     final _startDateController = TextEditingController(
       text: "${selectedStartDate.day}/${selectedStartDate.month}/${selectedStartDate.year}",
     );
+    bool _validateStartDate = false;
 
     showDialog(
       context: context,
@@ -343,27 +494,25 @@ class _ProfilePageState extends State<profile_page> {
                         controller: _startDateController,
                         decoration: InputDecoration(
                           labelText: "Start Date",
-                          hintText: "dd/mm/yyyy",
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(6),
-                          ),
+                          hintText: selectedStartDate != null
+                              ? "${selectedStartDate!.day}/${selectedStartDate!.month}/${selectedStartDate!.year}"
+                              : "dd/mm/yyyy",
+                          border: OutlineInputBorder(),
+                          floatingLabelBehavior: selectedStartDate != null
+                              ? FloatingLabelBehavior.always
+                              : FloatingLabelBehavior.auto,
                           suffixIcon: IconButton(
-                            icon: const Icon(Icons.today),
-                            onPressed: () async {
-                              DateTime? pickedDate = await showDatePicker(
-                                context: context,
-                                initialDate: selectedStartDate,
-                                firstDate: DateTime(2000),
-                                lastDate: DateTime(2100),
-                              );
-                              if (pickedDate != null) {
-                                selectedStartDate = pickedDate;
-                                _startDateController.text =
-                                "${pickedDate.day}/${pickedDate.month}/${pickedDate.year}";
-                              }
-                            },
+                            icon: Icon(Icons.today),
+                            onPressed: () => editInternStartDate(),
                           ),
+                          errorText:
+                          _validateStartDate ? "Enter a valid start date" : null,
                         ),
+                        onChanged: (text) {
+                          setState(() {
+                            _validateStartDate = false;
+                          });
+                        },
                       ),
                     ),
                   ],
