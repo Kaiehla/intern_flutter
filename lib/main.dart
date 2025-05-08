@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:intern_flutter/models/wprModel.dart';
 import 'package:intern_flutter/pages/add_log_page.dart';
@@ -13,6 +15,7 @@ import 'package:intern_flutter/firebase_options.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intern_flutter/utils/globals.dart';
 import 'package:intern_flutter/utils/shared_preferences_service.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:solar_icons/solar_icons.dart';
 
 //controllers
@@ -157,32 +160,251 @@ class _DrwListView extends State<DrwListView> {
   }
 }
 
-class ProgressSection extends StatelessWidget{
+// class ProgressSection extends StatelessWidget{
+//   const ProgressSection({super.key});
+//
+//   // eto ung sa hours progress kinimi kimi
+//   Future<Map<String, int>> getHoursProgress() async {
+//     SharedPreferences prefs = await SharedPreferences.getInstance();
+//
+//     // Retrieve internId from SharedPreferences
+//     String? internId = prefs.getString('internModel') != null
+//         ? jsonDecode(prefs.getString('internModel')!)['id']
+//         : null;
+//
+//     if (internId == null) {
+//       print("Intern ID not found in SharedPreferences.");
+//       return {'hoursCompleted': 0, 'hoursRequired': 0};
+//     }
+//
+//     // Query Firestore for progress logs to calculate total hours
+//     QuerySnapshot progressLogsSnapshot = await FirebaseFirestore.instance
+//         .collection('progress_logs')
+//         .where('internId', isEqualTo: internId)
+//         .get();
+//
+//     int totalHours = progressLogsSnapshot.docs.fold<int>(
+//       0,
+//           (sum, doc) => sum + ((doc['hours'] ?? 0) as int),
+//     );
+//
+//     // Query Firestore for interns to get hoursRequired
+//     DocumentSnapshot internSnapshot = await FirebaseFirestore.instance
+//         .collection('interns')
+//         .doc(internId)
+//         .get();
+//
+//     int hoursRequired = internSnapshot.exists
+//         ? (internSnapshot.data() as Map<String, dynamic>)['hoursRequired'] ?? 0
+//         : 0;
+//
+//     print("Total Hours Completed: $totalHours");
+//     print("Hours Required: $hoursRequired");
+//
+//     return {'hoursCompleted': totalHours, 'hoursRequired': hoursRequired};
+//   }
+//
+//   @override
+//   Widget build(BuildContext context) {
+//     return Padding(
+//       padding: EdgeInsets.only(bottom: 8),
+//       child: Column(
+//         crossAxisAlignment: CrossAxisAlignment.center,
+//         children: [
+//           Container(
+//             decoration:
+//             BoxDecoration(
+//                 color: Theme.of(context).colorScheme.primary.withOpacity(0.10),
+//                 borderRadius: BorderRadius.only(
+//                   bottomLeft: Radius.circular(30),
+//                   bottomRight: Radius.circular(30),
+//                 )
+//             ),
+//             padding: EdgeInsets.all(24),
+//             child:
+//             Center(
+//               child: Column(
+//                 mainAxisSize: MainAxisSize.min,
+//                 children: [
+//                   Text(
+//                     "Expected end of internship by:",
+//                     style: TextStyle(
+//                       fontSize: 15,
+//                       fontWeight: FontWeight.w400,
+//                       color: Colors.black,
+//                     ),
+//                   ),
+//                   Text(
+//                     "May 02, 2025",
+//                     style: TextStyle(
+//                       fontSize: 20,
+//                       fontWeight: FontWeight.w400,
+//                       color: Theme.of(context).colorScheme.primary,
+//                     ),
+//                   ),
+//                   SizedBox(height: 15),
+//                   Stack(
+//                     alignment: Alignment.center,
+//                     children: [
+//                       SizedBox(
+//                         width: 200,
+//                         height: 200,
+//                         child: CircularProgressIndicator(
+//                           value: 0.6,
+//                           strokeWidth: 8,
+//                           backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+//                           valueColor: AlwaysStoppedAnimation<Color>(Theme.of(context).colorScheme.primary),
+//                         ),
+//                       ),
+//                       Text(
+//                         "60%",
+//                         style: TextStyle(
+//                           fontSize: 50,
+//                           fontWeight: FontWeight.bold,
+//                           color: Colors.black,
+//                         ),
+//                       ),
+//                     ],
+//                   ),
+//                   SizedBox(height: 10), //Separator between ProgressIndicator and Hours
+//                 FutureBuilder<Map<String, int>>(
+//                   future: getHoursProgress(),
+//                   builder: (context, snapshot) {
+//                     if (snapshot.connectionState == ConnectionState.waiting) {
+//                       return const CircularProgressIndicator();
+//                     } else if (snapshot.hasError) {
+//                       return Text("Error: ${snapshot.error}");
+//                     } else if (!snapshot.hasData || snapshot.data == null) {
+//                       return const Text("No progress data found.");
+//                     } else {
+//                       final hoursCompleted = snapshot.data!['hoursCompleted'] ?? 0;
+//                       final hoursRequired = snapshot.data!['hoursRequired'] ?? 0;
+//                       return Text(
+//                         "$hoursCompleted/$hoursRequired hours",
+//                         style: TextStyle(
+//                           fontSize: 23,
+//                           fontWeight: FontWeight.w900,
+//                           color: Theme.of(context).colorScheme.primary,
+//                         ),
+//                       );
+//                     }
+//                   },
+//                 ),
+//
+//                  FutureBuilder<String?>(
+//                     future: prefsService.getInternData('position'),
+//                     builder: (context, snapshot) {
+//                       if (snapshot.connectionState == ConnectionState.waiting) {
+//                         return const CircularProgressIndicator(); // Show a loading indicator while waiting
+//                       } else if (snapshot.hasError) {
+//                         return const Text("Error retrieving position");
+//                       } else if (!snapshot.hasData || snapshot.data == null) {
+//                         return const Text("No Intern Position found");
+//                       } else {
+//                         return Text(
+//                           snapshot.data!,
+//                           style: TextStyle(
+//                             fontSize: 24,
+//                             color: Colors.black,
+//                             fontStyle: FontStyle.italic,
+//                             fontFamily: GoogleFonts.instrumentSerif().fontFamily,
+//                           ),
+//                         );
+//                       }
+//                     },
+//                   ),
+//                   FutureBuilder<String?>(
+//                     future: prefsService.getInternData('company'),
+//                     builder: (context, snapshot) {
+//                       if (snapshot.connectionState == ConnectionState.waiting) {
+//                         return const CircularProgressIndicator(); // Show a loading indicator while waiting
+//                       } else if (snapshot.hasError) {
+//                         return const Text("Error retrieving company");
+//                       } else if (!snapshot.hasData || snapshot.data == null) {
+//                         return const Text("No Company found");
+//                       } else {
+//                         return Text(
+//                           snapshot.data!,
+//                           style: TextStyle(
+//                             fontSize: 18,
+//                             color: Colors.black,
+//                             fontFamily: GoogleFonts.manrope().fontFamily,
+//                           ),
+//                         );
+//                       }
+//                     },
+//                   )
+//                 ],
+//               ),
+//             ),
+//           )
+//         ],
+//       ),
+//     );
+//   }
+// }
+
+class ProgressSection extends StatelessWidget {
   const ProgressSection({super.key});
+
+  Future<Map<String, int>> getHoursProgress() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+
+    // Retrieve internId from SharedPreferences
+    String? internId = prefs.getString('internModel') != null
+        ? jsonDecode(prefs.getString('internModel')!)['id']
+        : null;
+
+    if (internId == null) {
+      print("Intern ID not found in SharedPreferences.");
+      return {'hoursCompleted': 0, 'hoursRequired': 0};
+    }
+
+    // Query Firestore for progress logs to calculate total hours
+    QuerySnapshot progressLogsSnapshot = await FirebaseFirestore.instance
+        .collection('progress_logs')
+        .where('internId', isEqualTo: internId)
+        .get();
+
+    int totalHours = progressLogsSnapshot.docs.fold<int>(
+      0,
+          (sum, doc) => sum + ((doc['hours'] ?? 0) as int),
+    );
+
+    // Query Firestore for interns to get hoursRequired
+    DocumentSnapshot internSnapshot = await FirebaseFirestore.instance
+        .collection('interns')
+        .doc(internId)
+        .get();
+
+    int hoursRequired = internSnapshot.exists
+        ? (internSnapshot.data() as Map<String, dynamic>)['hoursRequired'] ?? 0
+        : 0;
+
+    return {'hoursCompleted': totalHours, 'hoursRequired': hoursRequired};
+  }
 
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.only(bottom: 8),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           Container(
-            decoration:
-            BoxDecoration(
-                color: Theme.of(context).colorScheme.primary.withOpacity(0.10),
-                borderRadius: BorderRadius.only(
-                  bottomLeft: Radius.circular(30),
-                  bottomRight: Radius.circular(30),
-                )
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.primary.withOpacity(0.10),
+              borderRadius: const BorderRadius.only(
+                bottomLeft: Radius.circular(30),
+                bottomRight: Radius.circular(30),
+              ),
             ),
-            padding: EdgeInsets.all(24),
-            child:
-            Center(
+            padding: const EdgeInsets.all(24),
+            child: Center(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Text(
+                  const Text(
                     "Expected end of internship by:",
                     style: TextStyle(
                       fontSize: 15,
@@ -190,48 +412,77 @@ class ProgressSection extends StatelessWidget{
                       color: Colors.black,
                     ),
                   ),
-                  Text(
+                  const Text(
                     "May 02, 2025",
                     style: TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.w400,
-                      color: Theme.of(context).colorScheme.primary,
+                      color: Colors.deepPurple,
                     ),
                   ),
-                  SizedBox(height: 15),
-                  Stack(
-                    alignment: Alignment.center,
-                    children: [
-                      SizedBox(
-                        width: 200,
-                        height: 200,
-                        child: CircularProgressIndicator(
-                          value: 0.6,
-                          strokeWidth: 8,
-                          backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-                          valueColor: AlwaysStoppedAnimation<Color>(Theme.of(context).colorScheme.primary),
-                        ),
-                      ),
-                      Text(
-                        "60%",
-                        style: TextStyle(
-                          fontSize: 50,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.black,
-                        ),
-                      ),
-                    ],
+                  const SizedBox(height: 15),
+                  FutureBuilder<Map<String, int>>(
+                    future: getHoursProgress(),
+                    builder: (context, snapshot) {
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        return const CircularProgressIndicator();
+                      } else if (snapshot.hasError) {
+                        return Text("Error: ${snapshot.error}");
+                      } else if (!snapshot.hasData || snapshot.data == null) {
+                        return const Text("No progress data found.");
+                      } else {
+                        final hoursCompleted = snapshot.data!['hoursCompleted'] ?? 0;
+                        final hoursRequired = snapshot.data!['hoursRequired'] ?? 0;
+                        final progress = hoursRequired > 0
+                            ? (hoursCompleted / hoursRequired)
+                            : 0.0;
+                        final percentage = (progress * 100).toStringAsFixed(0);
+
+                        return Column(
+                          children: [
+                            Stack(
+                              alignment: Alignment.center,
+                              children: [
+                                SizedBox(
+                                  width: 200,
+                                  height: 200,
+                                  child: CircularProgressIndicator(
+                                    value: progress,
+                                    strokeWidth: 8,
+                                    backgroundColor: Theme.of(context)
+                                        .colorScheme
+                                        .inversePrimary,
+                                    valueColor: AlwaysStoppedAnimation<Color>(
+                                      Theme.of(context).colorScheme.primary,
+                                    ),
+                                  ),
+                                ),
+                                Text(
+                                  "$percentage%",
+                                  style: const TextStyle(
+                                    fontSize: 50,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.black,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 10),
+                            Text(
+                              "$hoursCompleted/$hoursRequired hours",
+                              style: TextStyle(
+                                fontSize: 23,
+                                fontWeight: FontWeight.w900,
+                                color: Theme.of(context).colorScheme.primary,
+                              ),
+                            ),
+                          ],
+                        );
+                      }
+                    },
                   ),
-                  SizedBox(height: 10), //Separator between ProgressIndicator and Hours
-                  Text(
-                    "300/500 hours",
-                    style: TextStyle(
-                      fontSize: 23,
-                      fontWeight: FontWeight.w900,
-                      color: Theme.of(context).colorScheme.primary,
-                    ),
-                  ),
-                 FutureBuilder<String?>(
+
+                  FutureBuilder<String?>(
                     future: prefsService.getInternData('position'),
                     builder: (context, snapshot) {
                       if (snapshot.connectionState == ConnectionState.waiting) {
@@ -277,7 +528,7 @@ class ProgressSection extends StatelessWidget{
                 ],
               ),
             ),
-          )
+          ),
         ],
       ),
     );

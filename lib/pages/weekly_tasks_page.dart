@@ -135,7 +135,7 @@ class TaskPerDaySection extends StatelessWidget {
         }
 
         if (futureSnapshot.hasError || !futureSnapshot.hasData || futureSnapshot.data == null) {
-          return Center(child: Text("No intern ID found or an error occurred."));
+          return Center(child: Text("No intern ID found."));
         }
 
         final internId = futureSnapshot.data;
