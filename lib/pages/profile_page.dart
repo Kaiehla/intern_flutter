@@ -255,14 +255,14 @@ class _ProfilePageState extends State<profile_page> {
                       });
 
                       Navigator.pop(context);
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text("Details updated.")),
-                      );
+                      // ScaffoldMessenger.of(context).showSnackBar(
+                      //   const SnackBar(content: Text("Details updated.")),
+                      // );
                     } catch (e) {
                       Navigator.pop(context);
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text("Failed to update.")),
-                      );
+                      // ScaffoldMessenger.of(context).showSnackBar(
+                      //   const SnackBar(content: Text("Failed to update.")),
+                      // );
                     }
                   }
                 },
@@ -375,19 +375,19 @@ class _ProfilePageState extends State<profile_page> {
                       });
 
                       Navigator.pop(context);
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text("Details updated.")),
-                      );
+                      // ScaffoldMessenger.of(context).showSnackBar(
+                      //   const SnackBar(content: Text("Details updated.")),
+                      // );
                     } catch (e) {
                       Navigator.pop(context);
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text("Failed to update.")),
-                      );
+                      // ScaffoldMessenger.of(context).showSnackBar(
+                      //   const SnackBar(content: Text("Failed to update.")),
+                      // );
                     }
                   } else {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text("Please enter valid hours.")),
-                    );
+                    // ScaffoldMessenger.of(context).showSnackBar(
+                    //   const SnackBar(content: Text("Please enter valid hours.")),
+                    // );
                   }
                 },
                 style: FilledButton.styleFrom(
@@ -565,18 +565,18 @@ class _ProfilePageState extends State<profile_page> {
 
                         Navigator.pop(context); // First close the dialog
 
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text("Report submitted."),
-                          ),
-                        );
+                        // ScaffoldMessenger.of(context).showSnackBar(
+                        //   SnackBar(
+                        //     content: Text("Report submitted."),
+                        //   ),
+                        // );
                       } catch (e) {
                         Navigator.pop(context);
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text("Fail to submit report."),
-                          ),
-                        );
+                        // ScaffoldMessenger.of(context).showSnackBar(
+                        //   SnackBar(
+                        //     content: Text("Fail to submit report."),
+                        //   ),
+                        // );
                       }
                     }
                   },
@@ -1108,20 +1108,20 @@ class EraseDataDialog {
                     MaterialPageRoute(builder: (context) => const register_page()),
                         (route) => false, // Remove all previous routes
                   );
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text("All progress and data erased."),
-                      backgroundColor: Colors.red,
-                    ),
-                  );
+                  // ScaffoldMessenger.of(context).showSnackBar(
+                  //   const SnackBar(
+                  //     content: Text("All progress and data erased."),
+                  //     backgroundColor: Colors.red,
+                  //   ),
+                  // );
                 } catch (e) {
                   Navigator.of(context).pop(); // Close the dialog
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text("Failed to erase data: $e"),
-                      backgroundColor: Colors.red,
-                    ),
-                  );
+                  // ScaffoldMessenger.of(context).showSnackBar(
+                  //   SnackBar(
+                  //     content: Text("Failed to erase data: $e"),
+                  //     backgroundColor: Colors.red,
+                  //   ),
+                  // );
                 }
               },
               child: const Text("Yes"),

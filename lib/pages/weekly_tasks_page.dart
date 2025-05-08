@@ -5,6 +5,7 @@ import 'package:intern_flutter/pages/update_log_page.dart';
 import 'package:intl/intl.dart';
 import '../utils/shared_preferences_service.dart';
 import 'add_log_page.dart';
+import 'package:intern_flutter/main.dart';
 
 class weekly_tasks_page extends StatelessWidget {
   final String wprId;
@@ -35,7 +36,12 @@ class weekly_tasks_page extends StatelessWidget {
           leading: IconButton(
             icon: const Icon(Icons.arrow_back),
             onPressed: () {
-              Navigator.pop(context);
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const MyApp(),
+                ),
+              );
             },
           ),
         ),
@@ -320,21 +326,21 @@ class TaskPerDaySection extends StatelessWidget {
                                                         .doc(log.id)
                                                         .delete()
                                                         .then((_) {
+                                                      // ScaffoldMessenger.of(context).showSnackBar(
+                                                      //   SnackBar(
+                                                      //     content: Text("Progress log deleted successfully."),
+                                                      //     backgroundColor: Colors.red,
+                                                      //   ),
+                                                      // );
                                                       Navigator.of(context).pop();
-                                                      ScaffoldMessenger.of(context).showSnackBar(
-                                                        SnackBar(
-                                                          content: Text("Progress log deleted successfully."),
-                                                          backgroundColor: Colors.red,
-                                                        ),
-                                                      );
                                                     }).catchError((error) {
+                                                      // ScaffoldMessenger.of(context).showSnackBar(
+                                                      //   SnackBar(
+                                                      //     content: Text("Failed to delete log: $error"),
+                                                      //     backgroundColor: Colors.red,
+                                                      //   ),
+                                                      // );
                                                       Navigator.of(context).pop();
-                                                      ScaffoldMessenger.of(context).showSnackBar(
-                                                        SnackBar(
-                                                          content: Text("Failed to delete log: $error"),
-                                                          backgroundColor: Colors.red,
-                                                        ),
-                                                      );
                                                     });
                                                   },
                                                   style: ElevatedButton.styleFrom(
