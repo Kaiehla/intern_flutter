@@ -38,8 +38,11 @@ void main() async {
     options: DefaultFirebaseOptions.currentPlatform,
   );
 
-  // runApp(const MyApp());
-  runApp(const register_page());
+  // Check if the app has already registered user
+  String? internId = await prefsService.getInternData('id');
+  bool hasRegisteredUser = internId?.isNotEmpty ?? false;
+
+  runApp(hasRegisteredUser ? const MyApp() : const onboarding_page());
 }
 
 class MyApp extends StatelessWidget {
@@ -57,10 +60,13 @@ class MyApp extends StatelessWidget {
           useMaterial3: true,
           textTheme: GoogleFonts.manropeTextTheme(),
           bottomNavigationBarTheme: BottomNavigationBarThemeData(
-            selectedItemColor: Colors.deepPurple, // Label color
+            selectedItemColor: Colors.deepPurple,
+            // Label color
             unselectedItemColor: Colors.black45,
-            selectedIconTheme: IconThemeData(color: const Color(0xFFF3B006)), // Selected icon color
-            unselectedIconTheme: IconThemeData(color: Colors.black45), // Unselected icon color
+            selectedIconTheme: IconThemeData(color: const Color(0xFFF3B006)),
+            // Selected icon color
+            unselectedIconTheme: IconThemeData(color: Colors.black45),
+            // Unselected icon color
             backgroundColor: Colors.white,
             elevation: 5,
             showSelectedLabels: true,
@@ -76,8 +82,7 @@ class MyApp extends StatelessWidget {
           ),
         ),
         debugShowCheckedModeBanner: false,
-        home: const HomeScreen()
-    );
+        home: const HomeScreen());
   }
 }
 
@@ -129,32 +134,39 @@ class _DrwListView extends State<DrwListView> {
         ListTile(
           title: Text("Home"),
           leading: Icon(SolarIconsOutline.homeSmile),
-          onTap: () => Navigator.push(
-              context, MaterialPageRoute(builder: (context) => MyApp())),
+          onTap: () =>
+              Navigator.push(
+                  context, MaterialPageRoute(builder: (context) => MyApp())),
         ),
         ListTile(
           title: Text("Create Intern ID"),
           leading: Icon(Icons.person_add_alt_1),
-          onTap: () => Navigator.push(context,
-              MaterialPageRoute(builder: (context) => register_page())),
+          onTap: () =>
+              Navigator.push(context,
+                  MaterialPageRoute(builder: (context) => register_page())),
         ),
         ListTile(
           title: Text("Add Progress"),
           leading: Icon(Icons.add),
-          onTap: () => Navigator.push(
-              context, MaterialPageRoute(builder: (context) => add_log_page())),
+          onTap: () =>
+              Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => add_log_page())),
         ),
         ListTile(
           title: Text("My Intern"),
           leading: Icon(Icons.person),
-          onTap: () => Navigator.push(
-              context, MaterialPageRoute(builder: (context) => profile_page())),
+          onTap: () =>
+              Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => profile_page())),
         ),
         ListTile(
           title: Text("Onboarding"),
           leading: Icon(Icons.video_collection_outlined),
-          onTap: () => Navigator.push(
-              context, MaterialPageRoute(builder: (context) => onboarding_page())),
+          onTap: () =>
+              Navigator.push(context,
+                  MaterialPageRoute(builder: (context) => onboarding_page())),
         ),
       ]),
     );
@@ -385,6 +397,58 @@ class ProgressSection extends StatelessWidget {
     return {'hoursCompleted': totalHours, 'hoursRequired': hoursRequired};
   }
 
+  Future<String?> getInternPosition() async {
+    try {
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      String? internId = prefs.getString('internModel') != null
+          ? jsonDecode(prefs.getString('internModel')!)['id']
+          : null;
+
+      if (internId == null) {
+        print("Intern ID not found in SharedPreferences.");
+        return null;
+      }
+
+      DocumentSnapshot internSnapshot = await FirebaseFirestore.instance
+          .collection('interns')
+          .doc(internId)
+          .get();
+
+      return internSnapshot.exists
+          ? (internSnapshot.data() as Map<String, dynamic>)['position'] as String?
+          : null;
+    } catch (e) {
+      print("Error fetching intern position: $e");
+      return null;
+    }
+  }
+
+  Future<String?> getInternCompany() async {
+    try {
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      String? internId = prefs.getString('internModel') != null
+          ? jsonDecode(prefs.getString('internModel')!)['id']
+          : null;
+
+      if (internId == null) {
+        print("Intern ID not found in SharedPreferences.");
+        return null;
+      }
+
+      DocumentSnapshot internSnapshot = await FirebaseFirestore.instance
+          .collection('interns')
+          .doc(internId)
+          .get();
+
+      return internSnapshot.exists
+          ? (internSnapshot.data() as Map<String, dynamic>)['company'] as String?
+          : null;
+    } catch (e) {
+      print("Error fetching intern company: $e");
+      return null;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Padding(
@@ -394,7 +458,11 @@ class ProgressSection extends StatelessWidget {
         children: [
           Container(
             decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.primary.withOpacity(0.10),
+              color: Theme
+                  .of(context)
+                  .colorScheme
+                  .primary
+                  .withOpacity(0.10),
               borderRadius: const BorderRadius.only(
                 bottomLeft: Radius.circular(30),
                 bottomRight: Radius.circular(30),
@@ -440,8 +508,10 @@ class ProgressSection extends StatelessWidget {
                       } else if (!snapshot.hasData || snapshot.data == null) {
                         return const Text("No progress data found.");
                       } else {
-                        final hoursCompleted = snapshot.data!['hoursCompleted'] ?? 0;
-                        final hoursRequired = snapshot.data!['hoursRequired'] ?? 0;
+                        final hoursCompleted =
+                            snapshot.data!['hoursCompleted'] ?? 0;
+                        final hoursRequired =
+                            snapshot.data!['hoursRequired'] ?? 0;
                         final progress = hoursRequired > 0
                             ? (hoursCompleted / hoursRequired)
                             : 0.0;
@@ -458,11 +528,15 @@ class ProgressSection extends StatelessWidget {
                                   child: CircularProgressIndicator(
                                     value: progress,
                                     strokeWidth: 8,
-                                    backgroundColor: Theme.of(context)
+                                    backgroundColor: Theme
+                                        .of(context)
                                         .colorScheme
                                         .inversePrimary,
                                     valueColor: AlwaysStoppedAnimation<Color>(
-                                      Theme.of(context).colorScheme.primary,
+                                      Theme
+                                          .of(context)
+                                          .colorScheme
+                                          .primary,
                                     ),
                                   ),
                                 ),
@@ -482,7 +556,10 @@ class ProgressSection extends StatelessWidget {
                               style: TextStyle(
                                 fontSize: 23,
                                 fontWeight: FontWeight.w900,
-                                color: Theme.of(context).colorScheme.primary,
+                                color: Theme
+                                    .of(context)
+                                    .colorScheme
+                                    .primary,
                               ),
                             ),
                           ],
@@ -490,9 +567,8 @@ class ProgressSection extends StatelessWidget {
                       }
                     },
                   ),
-
                   FutureBuilder<String?>(
-                    future: prefsService.getInternData('position'),
+                    future: getInternPosition(),
                     builder: (context, snapshot) {
                       if (snapshot.connectionState == ConnectionState.waiting) {
                         return const CircularProgressIndicator(); // Show a loading indicator while waiting
@@ -504,7 +580,7 @@ class ProgressSection extends StatelessWidget {
                         return Text(
                           snapshot.data!,
                           style: TextStyle(
-                            fontSize: 24,
+                            fontSize: 18,
                             color: Colors.black,
                             fontStyle: FontStyle.italic,
                             fontFamily: GoogleFonts.instrumentSerif().fontFamily,
@@ -514,7 +590,7 @@ class ProgressSection extends StatelessWidget {
                     },
                   ),
                   FutureBuilder<String?>(
-                    future: prefsService.getInternData('company'),
+                    future: getInternCompany(),
                     builder: (context, snapshot) {
                       if (snapshot.connectionState == ConnectionState.waiting) {
                         return const CircularProgressIndicator(); // Show a loading indicator while waiting
@@ -533,7 +609,7 @@ class ProgressSection extends StatelessWidget {
                         );
                       }
                     },
-                  )
+                  ),
                 ],
               ),
             ),
@@ -544,7 +620,7 @@ class ProgressSection extends StatelessWidget {
   }
 }
 
-class WeeklyProgressSection extends StatelessWidget{
+class WeeklyProgressSection extends StatelessWidget {
   const WeeklyProgressSection({super.key});
 
   Future<String?> _getInternId() async {
@@ -770,38 +846,38 @@ class _HomeScreenState extends State<HomeScreen> {
   // navigation logic
   int _selectedIndex = 0;
 
- final List<Widget> _pages = [
-   Scaffold(
-     appBar: AppBar(
-       title: SizedBox(
-         height: 42,
-         child: Gif(
-           image: AssetImage("logo.gif"),
-           autostart: Autostart.loop,
-         ),
-       ),
-       centerTitle: true,
-     ),
-     body: SingleChildScrollView(
-       child: Padding(
-         padding: const EdgeInsets.symmetric(horizontal: 16),
-         child: Column(
-           children: const [
-             ProgressSection(),
-             WeeklyProgressSection(),
-           ],
-         ),
-       ),
-     ),
-     drawer: Drawer(
-       child: ListView(
-         children: [DrwHeader(), DrwListView()],
-       ),
-     ),
-   ),
-   const add_log_page(),
-   const profile_page(),
- ];
+  final List<Widget> _pages = [
+    Scaffold(
+      appBar: AppBar(
+        title: SizedBox(
+          height: 42,
+          child: Gif(
+            image: AssetImage("logo.gif"),
+            autostart: Autostart.loop,
+          ),
+        ),
+        centerTitle: true,
+      ),
+      body: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: Column(
+            children: const [
+              ProgressSection(),
+              WeeklyProgressSection(),
+            ],
+          ),
+        ),
+      ),
+      // drawer: Drawer(
+      //   child: ListView(
+      //     children: [DrwHeader(), DrwListView()],
+      //   ),
+      // ),
+    ),
+    const add_log_page(),
+    const profile_page(),
+  ];
 
   void _onItemTapped(int index) {
     setState(() {
@@ -822,8 +898,7 @@ class _HomeScreenState extends State<HomeScreen> {
         child: Icon(Icons.add),
         shape: RoundedRectangleBorder(
             side: BorderSide(color: Colors.black, width: 2),
-            borderRadius: BorderRadius.circular(16)
-        ),
+            borderRadius: BorderRadius.circular(16)),
       ),
     );
   }
@@ -1036,7 +1111,9 @@ class _AddWPRState extends State<AddWPR> {
             ],
             onChanged: (text) {
               // so it doesn't accept 0, 00, or 01 as inputs
-              if (text == "0" || text == "00" || (text.startsWith('0') && text.length > 1)) {
+              if (text == "0" ||
+                  text == "00" ||
+                  (text.startsWith('0') && text.length > 1)) {
                 _wprNumController.clear();
                 setState(() {
                   _validateWprNum = true;
@@ -1057,7 +1134,8 @@ class _AddWPRState extends State<AddWPR> {
             decoration: InputDecoration(
               labelText: "Start Date",
               hintText: _selectedStartDate != null
-                  ? "${_selectedStartDate!.day}/${_selectedStartDate!.month}/${_selectedStartDate!.year}"
+                  ? "${_selectedStartDate!.day}/${_selectedStartDate!
+                  .month}/${_selectedStartDate!.year}"
                   : "dd/mm/yyyy",
               border: OutlineInputBorder(),
               floatingLabelBehavior: _selectedStartDate != null
@@ -1082,7 +1160,8 @@ class _AddWPRState extends State<AddWPR> {
             decoration: InputDecoration(
               labelText: "End Date",
               hintText: _selectedEndDate != null
-                  ? "${_selectedEndDate!.day}/${_selectedEndDate!.month}/${_selectedEndDate!.year}"
+                  ? "${_selectedEndDate!.day}/${_selectedEndDate!
+                  .month}/${_selectedEndDate!.year}"
                   : "dd/mm/yyyy",
               border: OutlineInputBorder(),
               floatingLabelBehavior: _selectedStartDate != null
@@ -1118,13 +1197,20 @@ class _AddWPRState extends State<AddWPR> {
             });
           },
           style: FilledButton.styleFrom(
-            backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+            backgroundColor: Theme
+                .of(context)
+                .colorScheme
+                .inversePrimary,
           ),
-          child: Text("Save",
+          child: Text(
+            "Save",
             style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.bold,
-                color: Theme.of(context).colorScheme.onPrimaryContainer),
+                color: Theme
+                    .of(context)
+                    .colorScheme
+                    .onPrimaryContainer),
           ),
         ),
       ],
@@ -1360,7 +1446,10 @@ class _UpdateWPRState extends State<UpdateWPR> {
         ElevatedButton(
           onPressed: updateWpr,
           style: FilledButton.styleFrom(
-            backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+            backgroundColor: Theme
+                .of(context)
+                .colorScheme
+                .inversePrimary,
           ),
           child: Text("Save", style: TextStyle(fontWeight: FontWeight.bold)),
         ),
