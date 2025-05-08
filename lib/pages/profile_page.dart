@@ -297,6 +297,8 @@ class _ProfilePageState extends State<profile_page> {
       text: internData!.hoursRequired.toString(),
     );
 
+    bool _validateHoursRequired = false;
+
     showDialog(
       context: context,
       builder: (context) {
@@ -312,11 +314,35 @@ class _ProfilePageState extends State<profile_page> {
                     children: [
                       TextField(
                         controller: hoursController,
-                        keyboardType: TextInputType.number,
-                        decoration: const InputDecoration(
-                          labelText: 'Hours Required',
+                        maxLength: 4,
+                        decoration: InputDecoration(
+                          labelText: "Hours Required",
                           border: OutlineInputBorder(),
+                          suffixIcon: Icon(Icons.timer_outlined),
+                          errorText: _validateHoursRequired
+                              ? "Enter hours in numbers"
+                              : null,
                         ),
+                        keyboardType: TextInputType.number,
+                        inputFormatters: <TextInputFormatter>[
+                          LengthLimitingTextInputFormatter(4),
+                          FilteringTextInputFormatter.digitsOnly
+                        ],
+                        onChanged: (text) {
+                          // so it doesn't accept 0, 00, or 01 as inputs
+                          if (text == "0" ||
+                              text == "00" ||
+                              (text.startsWith('0') && text.length > 1)) {
+                            hoursController.clear();
+                            setState(() {
+                              _validateHoursRequired = true;
+                            });
+                          } else {
+                            setState(() {
+                              _validateHoursRequired = false;
+                            });
+                          }
+                        },
                       ),
                     ],
                   );
