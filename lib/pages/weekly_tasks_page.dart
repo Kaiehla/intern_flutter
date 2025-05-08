@@ -2,12 +2,23 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intern_flutter/pages/update_log_page.dart';
-
+import 'package:intl/intl.dart';
 import '../utils/shared_preferences_service.dart';
 import 'add_log_page.dart';
 
 class weekly_tasks_page extends StatelessWidget {
-  const weekly_tasks_page({super.key});
+  final String wprId;
+  final int wprNum;
+  final String startDate;
+  final String endDate;
+
+  const weekly_tasks_page({
+    super.key,
+    required this.wprId,
+    required this.wprNum,
+    required this.startDate,
+    required this.endDate,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -20,9 +31,9 @@ class weekly_tasks_page extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       home: Scaffold(
         appBar: AppBar(
-          title: Text(""),
+          title: const Text(""),
           leading: IconButton(
-            icon: Icon(Icons.arrow_back),
+            icon: const Icon(Icons.arrow_back),
             onPressed: () {
               Navigator.pop(context);
             },
@@ -35,7 +46,7 @@ class weekly_tasks_page extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  "Weekly Progress Report 1",
+                  "Weekly Progress Report $wprNum",
                   style: TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
@@ -44,14 +55,42 @@ class weekly_tasks_page extends StatelessWidget {
                   ),
                 ),
                 Text(
-                  "39 hours completed this week",
-                  style: TextStyle(fontSize: 16),
+                  "$startDate - $endDate",
+                  style: const TextStyle(fontSize: 16),
                 ),
-                SizedBox(height: 10),
-                ChooseDayChip(),
-                SizedBox(height: 20),
-                TaskPerDaySection(),
-                SizedBox(height: 59),
+                FutureBuilder<QuerySnapshot>(
+                  future: FirebaseFirestore.instance
+                      .collection('progress_logs')
+                      .where('wprId', isEqualTo: wprId)
+                      .get(),
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return const Text("Loading hours...", style: TextStyle(fontSize: 16));
+                    }
+
+                    if (snapshot.hasError) {
+                      return const Text("Error loading hours", style: TextStyle(fontSize: 16));
+                    }
+
+                    final logs = snapshot.data?.docs ?? [];
+                    int totalHours = 0;
+
+                    for (var doc in logs) {
+                      final hours = doc['hours'];
+                      if (hours is int) totalHours += hours;
+                    }
+
+                    return Text(
+                      "$totalHours hours completed this week",
+                      style: const TextStyle(fontSize: 16),
+                    );
+                  },
+                ),
+                const SizedBox(height: 10),
+                // ChooseDayChip(),
+                const SizedBox(height: 20),
+                TaskPerDaySection(wprId: wprId),
+                const SizedBox(height: 59),
                 // ButtonFieldSection(),
               ],
             ),
@@ -61,14 +100,14 @@ class weekly_tasks_page extends StatelessWidget {
           onPressed: () {
             Navigator.push(
               context,
-              MaterialPageRoute(builder: (context) => add_log_page()),
+              MaterialPageRoute(builder: (context) => const  add_log_page()),
             );
           },
-          child: Icon(Icons.add, color: Colors.white),
+          child: const Icon(Icons.add, color: Colors.white),
           backgroundColor: Theme.of(context).colorScheme.primary,
           shape: RoundedRectangleBorder(
-              side: BorderSide(color: Colors.black, width: 2),
-              borderRadius: BorderRadius.circular(16)
+            side: const BorderSide(color: Colors.black, width: 2),
+            borderRadius: BorderRadius.circular(16),
           ),
         ),
       ),
@@ -76,45 +115,47 @@ class weekly_tasks_page extends StatelessWidget {
   }
 }
 
-class ChooseDayChip extends StatefulWidget {
-  @override
-  _ChooseDayChip createState() => _ChooseDayChip();
-}
-
-class _ChooseDayChip extends State<ChooseDayChip> {
-  List<String> days = ["D-1", "D-2", "D-3", "D-4", "D-5"];
-  String _selectedDay = "";
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Wrap(
-        spacing: 5.0,
-        children: days.map((day) {
-          return ChoiceChip(
-            label: Text(
-              day,
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                fontFamily: GoogleFonts.instrumentSerif().fontFamily,
-              ),
-            ),
-            selected: _selectedDay == day,
-            onSelected: (bool selected) {
-              setState(() {
-                _selectedDay = selected ? day : "";
-              });
-            },
-          );
-        }).toList(),
-      ),
-    );
-  }
-}
+// class ChooseDayChip extends StatefulWidget {
+//   @override
+//   _ChooseDayChip createState() => _ChooseDayChip();
+// }
+//
+// class _ChooseDayChip extends State<ChooseDayChip> {
+//   List<String> days = ["D-1", "D-2", "D-3", "D-4", "D-5"];
+//   String _selectedDay = "";
+//
+//   @override
+//   Widget build(BuildContext context) {
+//     return Center(
+//       child: Wrap(
+//         spacing: 5.0,
+//         children: days.map((day) {
+//           return ChoiceChip(
+//             label: Text(
+//               day,
+//               style: TextStyle(
+//                 fontWeight: FontWeight.bold,
+//                 fontFamily: GoogleFonts.instrumentSerif().fontFamily,
+//               ),
+//             ),
+//             selected: _selectedDay == day,
+//             onSelected: (bool selected) {
+//               setState(() {
+//                 _selectedDay = selected ? day : "";
+//               });
+//             },
+//           );
+//         }).toList(),
+//       ),
+//     );
+//   }
+// }
 
 
 class TaskPerDaySection extends StatelessWidget {
-  const TaskPerDaySection({super.key});
+  final String wprId;
+
+  const TaskPerDaySection({super.key, required this.wprId});
 
   Future<String?> _getInternId() async {
     SharedPreferencesService prefsService = SharedPreferencesService();
@@ -144,7 +185,7 @@ class TaskPerDaySection extends StatelessWidget {
           stream: FirebaseFirestore.instance
               .collection('progress_logs')
               .where('internId', isEqualTo: internId)
-              // .orderBy('created_at', descending: true)
+              .where('wprId', isEqualTo: wprId)
               .snapshots(),
           builder: (context, streamSnapshot) {
             if (streamSnapshot.connectionState == ConnectionState.waiting) {
@@ -161,147 +202,177 @@ class TaskPerDaySection extends StatelessWidget {
 
             final logs = streamSnapshot.data!.docs;
 
+            // Group logs by formatted date
+            Map<String, List<QueryDocumentSnapshot>> logsByDate = {};
+
+            for (var log in logs) {
+              // Use DateTime.parse because the date is a string
+              DateTime date = DateTime.parse(log['date']);
+              String formattedDate = DateFormat('dd-MM-yyyy').format(date);
+
+              logsByDate.putIfAbsent(formattedDate, () => []).add(log);
+            }
+
+            final sortedDates = logsByDate.keys.toList()
+              ..sort((a, b) => DateFormat('dd-MM-yyyy').parse(a).compareTo(DateFormat('dd-MM-yyyy').parse(b)));
+
             return ListView.builder(
               shrinkWrap: true,
               physics: NeverScrollableScrollPhysics(),
-              itemCount: logs.length,
+              itemCount: sortedDates.length,
               itemBuilder: (context, index) {
-                final log = logs[index];
-                return Card(
-                  elevation: 4,
-                  margin: EdgeInsets.symmetric(vertical: 8),
-                  color: Colors.white,
-                  shape: RoundedRectangleBorder(
-                    side: BorderSide(color: Colors.black, width: 2),
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  child: Padding(
-                    padding: const EdgeInsets.all(12.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              log['task'] ?? "No Task Title",
-                              style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 20,
-                                fontStyle: FontStyle.italic,
-                              ),
-                            ),
-                            PopupMenuButton<String>(
-                              onSelected: (value) {
-                                if (value == 'Edit') {
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (context) => update_log_page(
-                                        logId: log.id,
-                                        task: log['task'],
-                                        date: log['date'],
-                                        hours: log['hours'].toString(),
-                                        description: log['description'],
-                                      ),
+                final dateKey = sortedDates[index];
+                final logsForDate = logsByDate[dateKey]!;
+
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 12.0),
+                      child: Text(
+                        dateKey,
+                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                    ...logsForDate.map((log) {
+                      return Card(
+                        elevation: 4,
+                        margin: EdgeInsets.symmetric(vertical: 8),
+                        color: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          side: BorderSide(color: Colors.black, width: 2),
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: Padding(
+                          padding: const EdgeInsets.all(12.0),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text(
+                                    log['task'] ?? "No Task Title",
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 20,
+                                      fontStyle: FontStyle.italic,
                                     ),
-                                  );
-                                } else if (value == 'Delete') {
-                                  showDialog(
-                                    context: context,
-                                    builder: (BuildContext context) {
-                                      return AlertDialog(
-                                        title: Text("Delete Progress Log",
-                                          style: GoogleFonts.instrumentSerif(
-                                            fontSize: 18,
-                                            fontWeight: FontWeight.bold,
-                                            fontStyle: FontStyle.italic,
-                                          ),),
-                                        content: Text("Are you sure you want to delete this progress log?",
+                                  ),
+                                  PopupMenuButton<String>(
+                                    onSelected: (value) {
+                                      if (value == 'Edit') {
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (context) => update_log_page(
+                                              logId: log.id,
+                                              task: log['task'],
+                                              date: log['date'],
+                                              hours: log['hours'].toString(),
+                                              description: log['description'],
+                                            ),
+                                          ),
+                                        );
+                                      } else if (value == 'Delete') {
+                                        showDialog(
+                                          context: context,
+                                          builder: (BuildContext context) {
+                                            return AlertDialog(
+                                              title: Text("Delete Progress Log",
+                                                style: GoogleFonts.instrumentSerif(
+                                                  fontSize: 18,
+                                                  fontWeight: FontWeight.bold,
+                                                  fontStyle: FontStyle.italic,
+                                                ),),
+                                              content: Text("Are you sure you want to delete this progress log?",
+                                                style: GoogleFonts.manrope(
+                                                  fontSize: 16,
+                                                  fontWeight: FontWeight.w400,
+                                                ),
+                                              ),
+                                              actions: [
+                                                TextButton(
+                                                  onPressed: () {
+                                                    Navigator.of(context).pop();
+                                                  },
+                                                  child: Text("Cancel"),
+                                                ),
+                                                ElevatedButton(
+                                                  onPressed: () {
+                                                    FirebaseFirestore.instance
+                                                        .collection('progress_logs')
+                                                        .doc(log.id)
+                                                        .delete()
+                                                        .then((_) {
+                                                      Navigator.of(context).pop();
+                                                      ScaffoldMessenger.of(context).showSnackBar(
+                                                        SnackBar(
+                                                          content: Text("Progress log deleted successfully."),
+                                                          backgroundColor: Colors.red,
+                                                        ),
+                                                      );
+                                                    }).catchError((error) {
+                                                      Navigator.of(context).pop();
+                                                      ScaffoldMessenger.of(context).showSnackBar(
+                                                        SnackBar(
+                                                          content: Text("Failed to delete log: $error"),
+                                                          backgroundColor: Colors.red,
+                                                        ),
+                                                      );
+                                                    });
+                                                  },
+                                                  style: ElevatedButton.styleFrom(
+                                                    backgroundColor: Theme.of(context).colorScheme.primary,
+                                                  ),
+                                                  child: Text("Delete",
+                                                    style: TextStyle(
+                                                      color: Colors.white,
+                                                    ),),
+                                                ),
+                                              ],
+                                            );
+                                          },
+                                        );
+                                      }
+                                    },
+                                    itemBuilder: (context) => [
+                                      PopupMenuItem(
+                                        value: 'Edit',
+                                        child: Text('Edit',
                                           style: GoogleFonts.manrope(
                                             fontSize: 16,
-                                            fontWeight: FontWeight.w400,
-                                          ),
-                                        ),
-                                        actions: [
-                                          TextButton(
-                                            onPressed: () {
-                                              Navigator.of(context).pop();
-                                            },
-                                            child: Text("Cancel"),
-                                          ),
-                                          ElevatedButton(
-                                            onPressed: () {
-                                              FirebaseFirestore.instance
-                                                  .collection('progress_logs')
-                                                  .doc(log.id)
-                                                  .delete()
-                                                  .then((_) {
-                                                Navigator.of(context).pop();
-                                                ScaffoldMessenger.of(context).showSnackBar(
-                                                  SnackBar(
-                                                    content: Text("Progress log deleted successfully."),
-                                                    backgroundColor: Colors.red,
-                                                  ),
-                                                );
-                                              }).catchError((error) {
-                                                Navigator.of(context).pop();
-                                                ScaffoldMessenger.of(context).showSnackBar(
-                                                  SnackBar(
-                                                    content: Text("Failed to delete log: $error"),
-                                                    backgroundColor: Colors.red,
-                                                  ),
-                                                );
-                                              });
-                                            },
-                                            style: ElevatedButton.styleFrom(
-                                              backgroundColor: Theme.of(context).colorScheme.primary,
-                                            ),
-                                            child: Text("Delete",
-                                              style: TextStyle(
-                                                color: Colors.white,
-                                              ),),
-                                          ),
-                                        ],
-                                      );
-                                    },
-                                  );
-                                }
-                              },
-                              itemBuilder: (context) => [
-                                PopupMenuItem(
-                                  value: 'Edit',
-                                  child: Text('Edit',
-                                    style: GoogleFonts.manrope(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.w500,
-                                    ),),
-                                ),
-                                PopupMenuItem(
-                                  value: 'Delete',
-                                  child: Text('Delete',
-                                    style: GoogleFonts.manrope(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.w500,
-                                    ),),
-                                ),
-                              ],
-                              icon: Icon(Icons.more_vert),
-                            ),
-                          ],
+                                            fontWeight: FontWeight.w500,
+                                          ),),
+                                      ),
+                                      PopupMenuItem(
+                                        value: 'Delete',
+                                        child: Text('Delete',
+                                          style: GoogleFonts.manrope(
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.w500,
+                                          ),),
+                                      ),
+                                    ],
+                                    icon: Icon(Icons.more_vert),
+                                  ),
+                                ],
+                              ),
+                              Text(
+                                log['description'] ?? "No Description",
+                                style: TextStyle(fontSize: 14),
+                              ),
+                              Divider(),
+                              Text(
+                                "${log['hours']} hour/s spent",
+                                style: TextStyle(fontSize: 14, color: Colors.black54),
+                              ),
+                            ],
+                          ),
                         ),
-                        Text(
-                          log['description'] ?? "No Description",
-                          style: TextStyle(fontSize: 14),
-                        ),
-                        Divider(),
-                        Text(
-                          "${log['hours']} hour/s spent",
-                          style: TextStyle(fontSize: 14, color: Colors.black54),
-                        ),
-                      ],
-                    ),
-                  ),
+                      );
+                    }).toList()
+                  ],
                 );
               },
             );
@@ -310,7 +381,8 @@ class TaskPerDaySection extends StatelessWidget {
       },
     );
   }
-  }
+}
+
 
 
 
