@@ -157,6 +157,15 @@ class TaskPerDaySection extends StatelessWidget {
 
   const TaskPerDaySection({super.key, required this.wprId});
 
+  // Flexible date parser
+  DateTime parseFlexibleDate(String dateString) {
+    try {
+      return DateTime.parse(dateString); // ISO format: 2025-04-23
+    } catch (_) {
+      return DateFormat('d/M/yyyy').parse(dateString); // e.g., 23/4/2025
+    }
+  }
+
   Future<String?> _getInternId() async {
     SharedPreferencesService prefsService = SharedPreferencesService();
     String? internId = await prefsService.getInternData('id');
@@ -206,11 +215,14 @@ class TaskPerDaySection extends StatelessWidget {
             Map<String, List<QueryDocumentSnapshot>> logsByDate = {};
 
             for (var log in logs) {
-              // Use DateTime.parse because the date is a string
-              DateTime date = DateTime.parse(log['date']);
-              String formattedDate = DateFormat('dd-MM-yyyy').format(date);
-
-              logsByDate.putIfAbsent(formattedDate, () => []).add(log);
+              try {
+                DateTime date = parseFlexibleDate(log['date']);
+                String formattedDate = DateFormat('dd-MM-yyyy').format(date);
+                logsByDate.putIfAbsent(formattedDate, () => []).add(log);
+              } catch (e) {
+                // Optionally log or handle errors if parsing fails
+                print("Invalid date format: ${log['date']}");
+              }
             }
 
             final sortedDates = logsByDate.keys.toList()
@@ -279,13 +291,16 @@ class TaskPerDaySection extends StatelessWidget {
                                           context: context,
                                           builder: (BuildContext context) {
                                             return AlertDialog(
-                                              title: Text("Delete Progress Log",
+                                              title: Text(
+                                                "Delete Progress Log",
                                                 style: GoogleFonts.instrumentSerif(
                                                   fontSize: 18,
                                                   fontWeight: FontWeight.bold,
                                                   fontStyle: FontStyle.italic,
-                                                ),),
-                                              content: Text("Are you sure you want to delete this progress log?",
+                                                ),
+                                              ),
+                                              content: Text(
+                                                "Are you sure you want to delete this progress log?",
                                                 style: GoogleFonts.manrope(
                                                   fontSize: 16,
                                                   fontWeight: FontWeight.w400,
@@ -325,10 +340,10 @@ class TaskPerDaySection extends StatelessWidget {
                                                   style: ElevatedButton.styleFrom(
                                                     backgroundColor: Theme.of(context).colorScheme.primary,
                                                   ),
-                                                  child: Text("Delete",
-                                                    style: TextStyle(
-                                                      color: Colors.white,
-                                                    ),),
+                                                  child: Text(
+                                                    "Delete",
+                                                    style: TextStyle(color: Colors.white),
+                                                  ),
                                                 ),
                                               ],
                                             );
@@ -339,19 +354,23 @@ class TaskPerDaySection extends StatelessWidget {
                                     itemBuilder: (context) => [
                                       PopupMenuItem(
                                         value: 'Edit',
-                                        child: Text('Edit',
+                                        child: Text(
+                                          'Edit',
                                           style: GoogleFonts.manrope(
                                             fontSize: 16,
                                             fontWeight: FontWeight.w500,
-                                          ),),
+                                          ),
+                                        ),
                                       ),
                                       PopupMenuItem(
                                         value: 'Delete',
-                                        child: Text('Delete',
+                                        child: Text(
+                                          'Delete',
                                           style: GoogleFonts.manrope(
                                             fontSize: 16,
                                             fontWeight: FontWeight.w500,
-                                          ),),
+                                          ),
+                                        ),
                                       ),
                                     ],
                                     icon: Icon(Icons.more_vert),
@@ -371,7 +390,7 @@ class TaskPerDaySection extends StatelessWidget {
                           ),
                         ),
                       );
-                    }).toList()
+                    }).toList(),
                   ],
                 );
               },
