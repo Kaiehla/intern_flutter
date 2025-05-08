@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intern_flutter/pages/update_log_page.dart';
-
+import 'package:intl/intl.dart';
 import '../utils/shared_preferences_service.dart';
 import 'add_log_page.dart';
 
@@ -186,7 +186,6 @@ class TaskPerDaySection extends StatelessWidget {
               .collection('progress_logs')
               .where('internId', isEqualTo: internId)
               .where('wprId', isEqualTo: wprId)
-              // .orderBy('created_at', descending: true)
               .snapshots(),
           builder: (context, streamSnapshot) {
             if (streamSnapshot.connectionState == ConnectionState.waiting) {
@@ -203,147 +202,177 @@ class TaskPerDaySection extends StatelessWidget {
 
             final logs = streamSnapshot.data!.docs;
 
+            // Group logs by formatted date
+            Map<String, List<QueryDocumentSnapshot>> logsByDate = {};
+
+            for (var log in logs) {
+              // Use DateTime.parse because the date is a string
+              DateTime date = DateTime.parse(log['date']);
+              String formattedDate = DateFormat('dd-MM-yyyy').format(date);
+
+              logsByDate.putIfAbsent(formattedDate, () => []).add(log);
+            }
+
+            final sortedDates = logsByDate.keys.toList()
+              ..sort((a, b) => DateFormat('dd-MM-yyyy').parse(a).compareTo(DateFormat('dd-MM-yyyy').parse(b)));
+
             return ListView.builder(
               shrinkWrap: true,
               physics: NeverScrollableScrollPhysics(),
-              itemCount: logs.length,
+              itemCount: sortedDates.length,
               itemBuilder: (context, index) {
-                final log = logs[index];
-                return Card(
-                  elevation: 4,
-                  margin: EdgeInsets.symmetric(vertical: 8),
-                  color: Colors.white,
-                  shape: RoundedRectangleBorder(
-                    side: BorderSide(color: Colors.black, width: 2),
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  child: Padding(
-                    padding: const EdgeInsets.all(12.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              log['task'] ?? "No Task Title",
-                              style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 20,
-                                fontStyle: FontStyle.italic,
-                              ),
-                            ),
-                            PopupMenuButton<String>(
-                              onSelected: (value) {
-                                if (value == 'Edit') {
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (context) => update_log_page(
-                                        logId: log.id,
-                                        task: log['task'],
-                                        date: log['date'],
-                                        hours: log['hours'].toString(),
-                                        description: log['description'],
-                                      ),
+                final dateKey = sortedDates[index];
+                final logsForDate = logsByDate[dateKey]!;
+
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 12.0),
+                      child: Text(
+                        dateKey,
+                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                    ...logsForDate.map((log) {
+                      return Card(
+                        elevation: 4,
+                        margin: EdgeInsets.symmetric(vertical: 8),
+                        color: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          side: BorderSide(color: Colors.black, width: 2),
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: Padding(
+                          padding: const EdgeInsets.all(12.0),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text(
+                                    log['task'] ?? "No Task Title",
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 20,
+                                      fontStyle: FontStyle.italic,
                                     ),
-                                  );
-                                } else if (value == 'Delete') {
-                                  showDialog(
-                                    context: context,
-                                    builder: (BuildContext context) {
-                                      return AlertDialog(
-                                        title: Text("Delete Progress Log",
-                                          style: GoogleFonts.instrumentSerif(
-                                            fontSize: 18,
-                                            fontWeight: FontWeight.bold,
-                                            fontStyle: FontStyle.italic,
-                                          ),),
-                                        content: Text("Are you sure you want to delete this progress log?",
+                                  ),
+                                  PopupMenuButton<String>(
+                                    onSelected: (value) {
+                                      if (value == 'Edit') {
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (context) => update_log_page(
+                                              logId: log.id,
+                                              task: log['task'],
+                                              date: log['date'],
+                                              hours: log['hours'].toString(),
+                                              description: log['description'],
+                                            ),
+                                          ),
+                                        );
+                                      } else if (value == 'Delete') {
+                                        showDialog(
+                                          context: context,
+                                          builder: (BuildContext context) {
+                                            return AlertDialog(
+                                              title: Text("Delete Progress Log",
+                                                style: GoogleFonts.instrumentSerif(
+                                                  fontSize: 18,
+                                                  fontWeight: FontWeight.bold,
+                                                  fontStyle: FontStyle.italic,
+                                                ),),
+                                              content: Text("Are you sure you want to delete this progress log?",
+                                                style: GoogleFonts.manrope(
+                                                  fontSize: 16,
+                                                  fontWeight: FontWeight.w400,
+                                                ),
+                                              ),
+                                              actions: [
+                                                TextButton(
+                                                  onPressed: () {
+                                                    Navigator.of(context).pop();
+                                                  },
+                                                  child: Text("Cancel"),
+                                                ),
+                                                ElevatedButton(
+                                                  onPressed: () {
+                                                    FirebaseFirestore.instance
+                                                        .collection('progress_logs')
+                                                        .doc(log.id)
+                                                        .delete()
+                                                        .then((_) {
+                                                      Navigator.of(context).pop();
+                                                      ScaffoldMessenger.of(context).showSnackBar(
+                                                        SnackBar(
+                                                          content: Text("Progress log deleted successfully."),
+                                                          backgroundColor: Colors.red,
+                                                        ),
+                                                      );
+                                                    }).catchError((error) {
+                                                      Navigator.of(context).pop();
+                                                      ScaffoldMessenger.of(context).showSnackBar(
+                                                        SnackBar(
+                                                          content: Text("Failed to delete log: $error"),
+                                                          backgroundColor: Colors.red,
+                                                        ),
+                                                      );
+                                                    });
+                                                  },
+                                                  style: ElevatedButton.styleFrom(
+                                                    backgroundColor: Theme.of(context).colorScheme.primary,
+                                                  ),
+                                                  child: Text("Delete",
+                                                    style: TextStyle(
+                                                      color: Colors.white,
+                                                    ),),
+                                                ),
+                                              ],
+                                            );
+                                          },
+                                        );
+                                      }
+                                    },
+                                    itemBuilder: (context) => [
+                                      PopupMenuItem(
+                                        value: 'Edit',
+                                        child: Text('Edit',
                                           style: GoogleFonts.manrope(
                                             fontSize: 16,
-                                            fontWeight: FontWeight.w400,
-                                          ),
-                                        ),
-                                        actions: [
-                                          TextButton(
-                                            onPressed: () {
-                                              Navigator.of(context).pop();
-                                            },
-                                            child: Text("Cancel"),
-                                          ),
-                                          ElevatedButton(
-                                            onPressed: () {
-                                              FirebaseFirestore.instance
-                                                  .collection('progress_logs')
-                                                  .doc(log.id)
-                                                  .delete()
-                                                  .then((_) {
-                                                Navigator.of(context).pop();
-                                                ScaffoldMessenger.of(context).showSnackBar(
-                                                  SnackBar(
-                                                    content: Text("Progress log deleted successfully."),
-                                                    backgroundColor: Colors.red,
-                                                  ),
-                                                );
-                                              }).catchError((error) {
-                                                Navigator.of(context).pop();
-                                                ScaffoldMessenger.of(context).showSnackBar(
-                                                  SnackBar(
-                                                    content: Text("Failed to delete log: $error"),
-                                                    backgroundColor: Colors.red,
-                                                  ),
-                                                );
-                                              });
-                                            },
-                                            style: ElevatedButton.styleFrom(
-                                              backgroundColor: Theme.of(context).colorScheme.primary,
-                                            ),
-                                            child: Text("Delete",
-                                              style: TextStyle(
-                                                color: Colors.white,
-                                              ),),
-                                          ),
-                                        ],
-                                      );
-                                    },
-                                  );
-                                }
-                              },
-                              itemBuilder: (context) => [
-                                PopupMenuItem(
-                                  value: 'Edit',
-                                  child: Text('Edit',
-                                    style: GoogleFonts.manrope(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.w500,
-                                    ),),
-                                ),
-                                PopupMenuItem(
-                                  value: 'Delete',
-                                  child: Text('Delete',
-                                    style: GoogleFonts.manrope(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.w500,
-                                    ),),
-                                ),
-                              ],
-                              icon: Icon(Icons.more_vert),
-                            ),
-                          ],
+                                            fontWeight: FontWeight.w500,
+                                          ),),
+                                      ),
+                                      PopupMenuItem(
+                                        value: 'Delete',
+                                        child: Text('Delete',
+                                          style: GoogleFonts.manrope(
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.w500,
+                                          ),),
+                                      ),
+                                    ],
+                                    icon: Icon(Icons.more_vert),
+                                  ),
+                                ],
+                              ),
+                              Text(
+                                log['description'] ?? "No Description",
+                                style: TextStyle(fontSize: 14),
+                              ),
+                              Divider(),
+                              Text(
+                                "${log['hours']} hour/s spent",
+                                style: TextStyle(fontSize: 14, color: Colors.black54),
+                              ),
+                            ],
+                          ),
                         ),
-                        Text(
-                          log['description'] ?? "No Description",
-                          style: TextStyle(fontSize: 14),
-                        ),
-                        Divider(),
-                        Text(
-                          "${log['hours']} hour/s spent",
-                          style: TextStyle(fontSize: 14, color: Colors.black54),
-                        ),
-                      ],
-                    ),
-                  ),
+                      );
+                    }).toList()
+                  ],
                 );
               },
             );
@@ -352,7 +381,8 @@ class TaskPerDaySection extends StatelessWidget {
       },
     );
   }
-  }
+}
+
 
 
 

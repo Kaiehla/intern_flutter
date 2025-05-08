@@ -406,21 +406,29 @@ class ProgressSection extends StatelessWidget {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   const Text(
-                    "Expected end of internship by:",
-                    style: TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w400,
-                      color: Colors.black,
-                    ),
-                  ),
-                  const Text(
-                    "May 02, 2025",
+                    "Your current progress is:",
                     style: TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.w400,
                       color: Colors.deepPurple,
                     ),
                   ),
+                  // const Text(
+                  //   "Expected end of internship by:",
+                  //   style: TextStyle(
+                  //     fontSize: 15,
+                  //     fontWeight: FontWeight.w400,
+                  //     color: Colors.black,
+                  //   ),
+                  // ),
+                  // const Text(
+                  //   "May 02, 2025",
+                  //   style: TextStyle(
+                  //     fontSize: 20,
+                  //     fontWeight: FontWeight.w400,
+                  //     color: Colors.deepPurple,
+                  //   ),
+                  // ),
                   const SizedBox(height: 15),
                   FutureBuilder<Map<String, int>>(
                     future: getHoursProgress(),
